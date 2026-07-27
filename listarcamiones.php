@@ -1,29 +1,27 @@
 <?php
+// Configura la cabecera para devolver respuesta en formato JSON
+header("Content-Type: application/json; charset=utf-8");
 
-if ($_SERVER["REQUEST_METHOD"] == "GET") {
+// Permite peticiones locales sin bloqueos de CORS
+header("Access-Control-Allow-Origin: *");
 
-    include "conexion.php";
+// Array con la lista base de camiones
+$camiones = [
+    [
+        "Id_Camion" => 1,
+        "EstadoCam" => "Disponible",
+        "Modelo" => "Frontal",
+        "C_CargaContenedor" => 10
+    ],
+    [
+        "Id_Camion" => 2,
+        "EstadoCam" => "En Reparación",
+        "Modelo" => "Lateral",
+        "C_CargaContenedor" => 8
+    ]
+];
 
-    $sql = "SELECT * FROM camion";
-
-    $resultado = mysqli_query($conn, $sql);
-
-    $camiones = array();
-
-    while($fila = mysqli_fetch_assoc($resultado)){
-        $camiones[] = $fila;
-    }
-
-    header("Content-Type: application/json");
-
-    echo json_encode($camiones);
-
-} else {
-
-    http_response_code(405);
-
-    echo "Método no permitido";
-
-}
-
+// Imprime los datos codificados en JSON
+echo json_encode($camiones, JSON_UNESCAPED_UNICODE);
+exit();
 ?>

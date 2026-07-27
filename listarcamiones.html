@@ -1,67 +1,103 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Listado de Camiones</title>
+    <title>Lista de Camiones</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
 
-<div class="max-w-6xl mx-auto">
+    <div class="max-w-4xl mx-auto space-y-6">
+        
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                Lista de Camiones 🚚
+            </h2>
+            <a href="camiones.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar Camión
+            </a>
+        </div>
 
-    <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
-
-        <img src="image/camion amarillo.png" class="mx-auto h-20 sm:h-28 mb-5 object-contain" alt="Camión">
-
-        <h1 class="text-2xl sm:text-4xl font-bold text-center text-green-700 mb-6 sm:mb-8">
-            Listado de Camiones
-        </h1>
-
-        <!-- Contenedor scrollable horizontal para móviles -->
-        <div class="overflow-x-auto">
-            <table class="min-w-full border border-gray-300 text-sm sm:text-base">
-                <thead class="bg-green-700 text-white">
-                    <tr>
-                        <th class="px-4 py-3 border whitespace-nowrap">ID</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Camión</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Modelo</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
-                    </tr>
-                </thead>
-                <tbody id="tablaCamiones" class="text-center bg-white divide-y divide-gray-200">
-                    <!-- Los datos se cargan dinámicamente con JS -->
-                </tbody>
-            </table>
+        <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Modelo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCamiones" class="text-center bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="4" class="py-4 text-gray-500">Cargando datos...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>
 
-</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let tabla = document.getElementById("tablaCamiones");
 
-<script>
-fetch("listarcamiones.php")
-.then(response => response.json())
-.then(datos => {
-    let tabla = document.getElementById("tablaCamiones");
-    datos.forEach(camion => {
-        tabla.innerHTML += `
-        <tr class="hover:bg-green-50">
-            <td class="border px-4 py-3">${camion.Id_Camion}</td>
-            <td class="border px-4 py-3">${camion.Camion}</td>
-            <td class="border px-4 py-3">${camion.EstadoCam}</td>
-            <td class="border px-4 py-3">${camion.Modelo}</td>
-            <td class="border px-4 py-3">${camion.C_CargaContenedor}</td>
-        </tr>
-        `;
-    });
-})
-.catch(error => {
-    console.log(error);
-});
-</script>
+            // 1. Cargar datos locales
+            const datosLocales = JSON.parse(localStorage.getItem("camiones_agregados")) || [];
+            console.log("📦 Camiones locales en localStorage:", datosLocales);
+
+            // 2. Intentar cargar desde PHP
+            fetch("listarcamiones.php")
+                .then(res => {
+                    if (!res.ok) throw new Error("Error en la respuesta de listarcamiones.php");
+                    return res.json();
+                })
+                .then(datosPHP => {
+                    // CONSOLE.LOG CLAVE: Muestra lo que responde PHP
+                    console.log("✅ Datos recibidos de PHP correctamente:", datosPHP);
+
+                    const todosLosCamiones = [...datosPHP, ...datosLocales];
+                    console.log("🚚 Lista completa unificada a mostrar:", todosLosCamiones);
+
+                    mostrarTabla(todosLosCamiones);
+                })
+                .catch(err => {
+                    // CONSOLE.LOG DE ERROR: Si algo falla te dirá qué pasó exactamente
+                    console.error("❌ Error al traer los datos de listarcamiones.php:", err);
+                    
+                    if (datosLocales.length > 0) {
+                        console.warn("⚠️ Mostrando únicamente datos locales debido al error.");
+                        mostrarTabla(datosLocales);
+                    } else {
+                        tabla.innerHTML = `<tr><td colspan="4" class="py-4 text-gray-500">No hay camiones registrados aún.</td></tr>`;
+                    }
+                });
+
+            function mostrarTabla(camiones) {
+                tabla.innerHTML = "";
+
+                if (!camiones || camiones.length === 0) {
+                    tabla.innerHTML = `<tr><td colspan="4" class="py-4 text-gray-500">No hay camiones registrados.</td></tr>`;
+                    return;
+                }
+
+                camiones.forEach(camion => {
+                    tabla.innerHTML += `
+                        <tr class="hover:bg-green-50">
+                            <td class="border px-4 py-3">${camion.Id_Camion ?? '-'}</td>
+                            <td class="border px-4 py-3">${camion.EstadoCam ?? '-'}</td>
+                            <td class="border px-4 py-3">${camion.Modelo ?? '-'}</td>
+                            <td class="border px-4 py-3">${camion.C_CargaContenedor ?? '-'}</td>
+                        </tr>`;
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>

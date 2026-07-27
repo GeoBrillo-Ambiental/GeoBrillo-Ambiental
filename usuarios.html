@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-4">
+        
+        <!-- Mensaje de éxito -->
+        <div id="mensajeExito" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center text-sm font-medium">
+            ¡Usuario guardado con éxito! 👤
+        </div>
+
+        <form id="formUsuario" class="space-y-5">
+
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-700">
+                Registro de Usuarios 👤
+            </h2>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Usuario</label>
+                <input type="text" id="nomUsuario" name="nom_usuario" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Nombre usuario">
+            </div>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                <input type="email" id="email" name="email" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="correo@ejemplo.com">
+            </div>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Rol</label>
+                <select id="rol" name="rol" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
+                    <option value="Administrador">Administrador</option>
+                    <option value="Chofer">Chofer</option>
+                </select>
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
+                    Guardar Usuario
+                </button>
+
+                <a href="listarusuarios.html" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 text-center transition">
+                    Ver Lista de Usuarios
+                </a>
+            </div>
+
+        </form>
+    </div>
+
+    <script>
+        document.getElementById("formUsuario").addEventListener("submit", function (e) {
+            e.preventDefault(); // Permanece en la página al guardar
+
+            const nuevoUsuario = {
+                Nom_Usuario: document.getElementById("nomUsuario").value,
+                Email: document.getElementById("email").value,
+                Rol: document.getElementById("rol").value
+            };
+
+            let usuariosLocales = JSON.parse(localStorage.getItem("usuarios_agregados")) || [];
+            nuevoUsuario.Id_Usuario = usuariosLocales.length + 3;
+            usuariosLocales.push(nuevoUsuario);
+            
+            localStorage.setItem("usuarios_agregados", JSON.stringify(usuariosLocales));
+
+            const formData = new FormData(this);
+            fetch("registrousuarios.php", {
+                method: "POST",
+                body: formData
+            }).catch(err => console.error(err));
+
+            this.reset();
+            const cartel = document.getElementById("mensajeExito");
+            cartel.classList.remove("hidden");
+            
+            setTimeout(() => {
+                cartel.classList.add("hidden");
+            }, 3000);
+        });
+    </script>
+
+</body>
+</html>

@@ -1,41 +1,26 @@
 <?php
+header("Content-Type: application/json; charset=utf-8");
+header("Access-Control-Allow-Origin: *");
 
-include "conexion.php";
+// Array de contenedores
+$contenedores = [
+    [
+        "Id_Contenedor" => 1,
+        "EstadoCont" => "Funcional",
+        "CapContenedor" => 2,
+        "TipoResiduo" => "Reciclable",
+        "Id_Ruta" => 101
+    ],
+    [
+        "Id_Contenedor" => 2,
+        "EstadoCont" => "Desbordado",
+        "CapContenedor" => 3,
+        "TipoResiduo" => "Mezclados",
+        "Id_Ruta" => 102
+    ]
+];
 
-// Solo permitir método GET
-if ($_SERVER["REQUEST_METHOD"] != "GET") {
-
-    http_response_code(405);
-
-    echo json_encode([
-        "mensaje" => "Método no permitido"
-    ]);
-
-    exit();
-}
-
-$sql = "SELECT
-            Id_Contenedor,
-            EstadoCont,
-            CapContenedor,
-            TipoResiduo,
-            Id_Ruta
-        FROM contenedor";
-
-$resultado = mysqli_query($conn, $sql);
-
-$contenedores = array();
-
-while ($fila = mysqli_fetch_assoc($resultado)) {
-
-    $contenedores[] = $fila;
-
-}
-
-header("Content-Type: application/json");
-
-echo json_encode($contenedores);
-
-mysqli_close($conn);
-
+// Devuelve el JSON para el fetch de JavaScript
+echo json_encode($contenedores, JSON_UNESCAPED_UNICODE);
+exit();
 ?>

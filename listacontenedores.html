@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,57 +10,91 @@
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
 
-<div class="max-w-6xl mx-auto">
+    <div class="max-w-6xl mx-auto space-y-6">
 
-    <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
+                Listado de Contenedores ♻️
+            </h1>
+            <a href="contenedores.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar Contenedor
+            </a>
+        </div>
 
-        <img src="image/contenedor.jpeg" class="mx-auto h-20 sm:h-28 mb-5 object-contain" alt="Contenedor">
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
 
-        <h1 class="text-2xl sm:text-4xl font-bold text-center text-green-700 mb-6 sm:mb-8">
-            Listado de Contenedores
-        </h1>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Tipo de residuo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Id de la ruta</th>
+                        </tr>
+                    </thead>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full border border-gray-300 text-sm sm:text-base">
-                <thead class="bg-green-700 text-white">
-                    <tr>
-                        <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Tipo de residuo</th>
-                        <th class="px-4 py-3 border whitespace-nowrap">Id de la ruta</th>
-                    </tr>
-                </thead>
+                    <tbody id="tablaContenedores" class="text-center bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="5" class="py-4 text-gray-500">Cargando contenedores...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-                <tbody id="tablaCamiones" class="text-center bg-white divide-y divide-gray-200">
-                    <!-- Los datos se cargan dinámicamente con JS -->
-                </tbody>
-            </table>
         </div>
 
     </div>
 
-</div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let tabla = document.getElementById("tablaContenedores");
 
-<script>
-fetch("listarcontenedores.php")
-.then(response => response.json())
-.then(datos => {
-    let tabla = document.getElementById("tablaCamiones");
-    datos.forEach(camion => {
-        tabla.innerHTML += `
-        <tr class="hover:bg-green-50">
-            <td class="border px-4 py-3">${camion.EstadoCam}</td>
-            <td class="border px-4 py-3">${camion.C_CargaContenedor}</td>
-            <td class="border px-4 py-3">${camion.Modelo}</td>
-            <td class="border px-4 py-3">${camion.Id_Camion}</td>
-        </tr>
-        `;
-    });
-})
-.catch(error => {
-    console.log(error);
-});
-</script>
+            const datosLocales = JSON.parse(localStorage.getItem("contenedores_agregados")) || [];
+            console.log("📦 Contenedores locales:", datosLocales);
+
+            fetch("listarcontenedores.php")
+                .then(res => {
+                    if (!res.ok) throw new Error("Error en la respuesta de listarcontenedores.php");
+                    return res.json();
+                })
+                .then(datosPHP => {
+                    console.log("✅ Datos recibidos de PHP correctamente:", datosPHP);
+                    const todosLosContenedores = [...datosPHP, ...datosLocales];
+                    mostrarTabla(todosLosContenedores);
+                })
+                .catch(err => {
+                    console.error("❌ Error al traer los datos de listarcontenedores.php:", err);
+                    if (datosLocales.length > 0) {
+                        mostrarTabla(datosLocales);
+                    } else {
+                        tabla.innerHTML = `<tr><td colspan="5" class="py-4 text-gray-500">No hay contenedores registrados aún.</td></tr>`;
+                    }
+                });
+
+            function mostrarTabla(contenedores) {
+                tabla.innerHTML = "";
+
+                if (!contenedores || contenedores.length === 0) {
+                    tabla.innerHTML = `<tr><td colspan="5" class="py-4 text-gray-500">No hay contenedores registrados.</td></tr>`;
+                    return;
+                }
+
+                contenedores.forEach(contenedor => {
+                    tabla.innerHTML += `
+                    <tr class="hover:bg-green-50">
+                        <td class="border px-4 py-3">${contenedor.Id_Contenedor ?? '-'}</td>
+                        <td class="border px-4 py-3">${contenedor.EstadoCont ?? '-'}</td>
+                        <td class="border px-4 py-3">${contenedor.CapContenedor ?? '-'}</td>
+                        <td class="border px-4 py-3">${contenedor.TipoResiduo ?? '-'}</td>
+                        <td class="border px-4 py-3">${contenedor.Id_Ruta ?? '-'}</td>
+                    </tr>
+                    `;
+                });
+            }
+        });
+    </script>
 
 </body>
 </html>

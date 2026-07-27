@@ -4,14 +4,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contenedores</title>
+    <title>Gestión de Contenedores</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
 
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8">
-        <form action="registro_camion.php" method="POST" class="space-y-5">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8 space-y-4">
+        
+        <!-- Mensaje de éxito -->
+        <div id="mensajeExito" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg text-center text-sm font-medium">
+            ¡Contenedor guardado con éxito! ♻️
+        </div>
+
+        <form id="formContenedor" class="space-y-5">
 
             <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-700">
                 Registro de Contenedores ♻️
@@ -19,29 +25,29 @@
 
             <div>
                 <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
-                <select name="estado" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
-                    <option>Funcional</option>
-                    <option>Roto</option>
-                    <option>Desbordado</option>
+                <select id="estadoCont" name="estado" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
+                    <option value="Funcional">Funcional</option>
+                    <option value="Roto">Roto</option>
+                    <option value="Desbordado">Desbordado</option>
                 </select>
             </div>
 
             <div>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Tipo de residuo</label>
-                <select name="residuo" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
-                    <option>Reciclable</option>
-                    <option>Mezclados</option>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Tipo de Residuo</label>
+                <select id="tipoResiduo" name="residuo" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
+                    <option value="Reciclable">Reciclable</option>
+                    <option value="Mezclados">Mezclados</option>
                 </select>
             </div>
 
             <div>
                 <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad</label>
-                <input type="number" name="capacidad" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 2">
+                <input type="number" id="capCont" name="capacidad" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 2">
             </div>
 
             <div>
-                <label class="block mb-1 text-sm font-medium text-gray-700">Id de ruta</label>
-                <input type="number" name="id" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 101">
+                <label class="block mb-1 text-sm font-medium text-gray-700">Id de Ruta</label>
+                <input type="number" id="idRuta" name="id_ruta" required class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 101">
             </div>
 
             <div class="space-y-3 pt-2">
@@ -49,13 +55,47 @@
                     Guardar Contenedor
                 </button>
 
-                <button type="button" onclick="window.location.href='listacontenedores.html'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-2.5 text-center transition">
-                    Lista de contenedores
-                </button>
+                <!-- CORREGIDO: Ruta actualizada a listacontenedores.html -->
+                <a href="listacontenedores.html" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 text-center transition">
+                    Ver Lista de Contenedores
+                </a>
             </div>
 
         </form>
     </div>
+
+    <script>
+        document.getElementById("formContenedor").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const nuevoContenedor = {
+                EstadoCont: document.getElementById("estadoCont").value,
+                TipoResiduo: document.getElementById("tipoResiduo").value,
+                CapContenedor: document.getElementById("capCont").value,
+                Id_Ruta: document.getElementById("idRuta").value
+            };
+
+            let contenedoresLocales = JSON.parse(localStorage.getItem("contenedores_agregados")) || [];
+            nuevoContenedor.Id_Contenedor = contenedoresLocales.length + 3;
+            contenedoresLocales.push(nuevoContenedor);
+            
+            localStorage.setItem("contenedores_agregados", JSON.stringify(contenedoresLocales));
+
+            const formData = new FormData(this);
+            fetch("registrocontenedores.php", {
+                method: "POST",
+                body: formData
+            }).catch(err => console.error(err));
+
+            this.reset();
+            const cartel = document.getElementById("mensajeExito");
+            cartel.classList.remove("hidden");
+            
+            setTimeout(() => {
+                cartel.classList.add("hidden");
+            }, 3000);
+        });
+    </script>
 
 </body>
 </html>
