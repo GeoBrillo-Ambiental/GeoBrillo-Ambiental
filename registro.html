@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - GeoBrillo</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="h-full bg-white-900">
+
+<div class="flex min-h-full justify-center items-center py-10">
+
+<div class="w-full max-w-xl bg-white rounded-2xl shadow-2xl p-8">
+
+    <img src="image/Logo_GeoBrillo_Ambiental.png"
+         class="mx-auto h-32 mb-6">
+
+    <h1 class="text-3xl font-bold text-center text-black-800 mb-8">
+        Registro de Usuario
+    </h1>
+
+    <form method="POST" action="registro.php" class="space-y-5">
+
+        <!-- Nombre -->
+        <div>
+            <label class="font-semibold">Primer Nombre</label>
+            <input type="text"
+                   name="Pri_Nom"
+                   required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <!-- Apellido -->
+        <div>
+            <label class="font-semibold">Primer Apellido</label>
+            <input type="text"
+                   name="Pri_Ape"
+                   required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <!-- Usuario -->
+        <div>
+            <label class="font-semibold">Nombre de Usuario</label>
+            <input type="text"
+                   name="Nom_Usuario"
+                   required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <!-- Contraseña -->
+        <div>
+            <label class="font-semibold">Contraseña</label>
+            <input type="password"
+                   name="Password"
+                   required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <!-- Email -->
+        <div>
+            <label class="font-semibold">Correo Electrónico</label>
+            <input type="email"
+                   name="Email"
+                   required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <!-- Rol -->
+        <div>
+
+            <label class="font-semibold block mb-3">
+                Seleccione un Rol
+            </label>
+
+            <div class="space-y-3">
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio"
+                           name="Rol"
+                           value="1"
+                           class="w-5 h-5 accent-green-600">
+                    <span>1 - Ciudadano</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio"
+                           name="Rol"
+                           value="2"
+                           class="w-5 h-5 accent-green-600">
+                    <span>2 - Chofer</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio"
+                           name="Rol"
+                           value="3"
+                           class="w-5 h-5 accent-green-600">
+                    <span>3 - Operador de Planta</span>
+                </label>
+
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio"
+                           name="Rol"
+                           value="4"
+                           class="w-5 h-5 accent-green-600">
+                    <span>4 - Integrante de una Cuadrilla</span>
+                </label>
+
+            </div>
+
+        </div>
+
+        <!-- Cuadrilla -->
+        <div>
+
+            <label class="font-semibold">
+                ID de Cuadrilla
+            </label>
+
+            <input type="number"
+                   name="Id_Cuadrilla"
+                   placeholder="Déjelo vacío si no pertenece a una cuadrilla"
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+
+        </div>
+
+        <!-- Botón -->
+
+        <button
+            type="submit"
+            class="w-full bg-green-700 text-white font-bold py-3 rounded-xl hover:bg-green-800 transition">
+
+            Registrarse
+
+        </button>
+
+    </form>
+
+</div>
+
+</div>
+
+</body>
+</html>

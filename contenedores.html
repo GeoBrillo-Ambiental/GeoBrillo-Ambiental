@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contenedores</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+        <form action="registro_camion.php" method="POST" class="space-y-5">
+
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-green-700">
+                Registro de Contenedores ♻️
+            </h2>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
+                <select name="estado" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
+                    <option>Funcional</option>
+                    <option>Roto</option>
+                    <option>Desbordado</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Tipo de residuo</label>
+                <select name="residuo" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500">
+                    <option>Reciclable</option>
+                    <option>Mezclados</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad</label>
+                <input type="number" name="capacidad" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 2">
+            </div>
+
+            <div>
+                <label class="block mb-1 text-sm font-medium text-gray-700">Id de ruta</label>
+                <input type="number" name="id" class="w-full border border-gray-300 rounded-lg p-3 focus:ring-green-500 focus:border-green-500" placeholder="Ej: 101">
+            </div>
+
+            <div class="space-y-3 pt-2">
+                <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
+                    Guardar Contenedor
+                </button>
+
+                <button type="button" onclick="window.location.href='listacontenedores.html'" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-2.5 text-center transition">
+                    Lista de contenedores
+                </button>
+            </div>
+
+        </form>
+    </div>
+
+</body>
+</html>

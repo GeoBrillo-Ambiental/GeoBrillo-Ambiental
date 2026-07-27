@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full bg-white">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login - GeoBrillo</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="h-full bg-white-900">
+
+<div class="flex min-h-full flex-col justify-center px-6 py-12 lg:px-8">
+
+    <!-- Logo -->
+    <div class="sm:mx-auto sm:w-full sm:max-w-sm">
+        <img src="image/Logo_GeoBrillo_Ambiental.png"
+             alt="GeoBrillo"
+             class="mx-auto h-70 w-auto">
+
+        <h2 class="mt-6 text-center text-3xl font-bold text-black">
+            Iniciar sesión
+        </h2>
+    </div>
+
+    <!-- Formulario -->
+    <div class="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
+
+        <form method="POST" action="inde.php" class="space-y-6">
+
+            <!-- Usuario -->
+            <div>
+                <label for="usuario" class="block text-sm font-medium text-black">
+                    Usuario
+                </label>
+
+                <div class="mt-2">
+                    <input
+                        id="usuario"
+                        name="usuario"
+                        type="text"
+                        required
+                        autocomplete="username"
+                        class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black focus:border-green-600 focus:outline-none"
+                    >
+                </div>
+            </div>
+
+            <!-- Contraseña -->
+            <div>
+                <label for="password" class="block text-sm font-medium text-black">
+                    Contraseña
+                </label>
+
+                <div class="mt-2">
+                    <input
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                        autocomplete="current-password"
+                        class="block w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-black focus:border-green-600 focus:outline-none"
+                    >
+                </div>
+            </div>
+
+            <!-- Botón -->
+            <div>
+                <button
+                    type="submit"
+                    class="flex w-full justify-center rounded-md bg-green-600 px-4 py-2 font-semibold text-white hover:bg-green-700">
+                    Iniciar sesión
+                </button>
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
