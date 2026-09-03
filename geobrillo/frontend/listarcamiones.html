@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Camiones</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto space-y-6">
+
+        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                Lista de Camiones 🚚
+            </h2>
+            <a href="camiones.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar Camión
+            </a>
+        </div>
+
+        <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Modelo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Carga (C_Carga)</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCamiones" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="5" class="py-4 text-gray-500">Cargando datos...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de edición -->
+    <div id="modalEditar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Editar Camión</h3>
+            <form id="formEditar" class="space-y-4">
+                <input type="hidden" name="id" id="editId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
+                    <select name="estado" id="editEstado" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Disponible">Disponible</option>
+                        <option value="En Reparación">En Reparación</option>
+                        <option value="Fuera de Servicio">Fuera de Servicio</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Modelo</label>
+                    <select name="modelo" id="editModelo" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Frontal">Frontal</option>
+                        <option value="Lateral">Lateral</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad (C_Carga)</label>
+                    <input type="number" name="capacidad" id="editCapacidad" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await protegerVistaDeGestion();
+            listar();
+        });
+
+        function listar() {
+            fetch(`${API_GESTION}/camionapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaCamiones");
+                    tabla.innerHTML = "";
+                    const camiones = data.data || [];
+
+                    if (camiones.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="5" class="py-4 text-gray-500">No hay camiones registrados.</td></tr>`;
+                        return;
+                    }
+
+                    camiones.forEach(camion => {
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-3">${camion.Id_Camion ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.EstadoCam ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.Modelo ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.C_Carga ?? '-'}</td>
+                                <td class="border px-4 py-3 space-x-1">
+                                    <button onclick='abrirModal(${JSON.stringify(camion)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminar(${camion.Id_Camion})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaCamiones").innerHTML = `<tr><td colspan="5" class="py-4 text-red-600 font-bold">Error al cargar la lista de camiones.</td></tr>`;
+                    console.error("❌ Error al traer los datos de camionapi.php:", err);
+                });
+        }
+
+        function abrirModal(c) {
+            document.getElementById("editId").value = c.Id_Camion;
+            document.getElementById("editEstado").value = c.EstadoCam || 'Disponible';
+            document.getElementById("editModelo").value = c.Modelo || 'Frontal';
+            document.getElementById("editCapacidad").value = c.C_Carga || '';
+            document.getElementById("modalEditar").classList.remove("hidden");
+        }
+
+        function cerrarModal() {
+            document.getElementById("modalEditar").classList.add("hidden");
+        }
+
+        document.getElementById("formEditar").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/camionapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) {
+                        cerrarModal();
+                        listar();
+                    }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function eliminar(id) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este camión?")) return;
+
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/camionapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => { alert(data.mensaje); listar(); })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+    </script>
+
+</body>
+</html>

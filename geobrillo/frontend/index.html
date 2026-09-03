@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoBrillo</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
+
+    <!-- Botón para abrir el menú -->
+    <button data-drawer-target="sidebar-menu"
+            data-drawer-show="sidebar-menu"
+            aria-controls="sidebar-menu"
+            type="button"
+            class="fixed top-3 left-3 z-50 p-2.5 text-black bg-white rounded-lg shadow-md hover:bg-green-600 hover:text-white transition">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+    </button>
+
+    <!-- Menú lateral -->
+    <div id="sidebar-menu"
+         class="fixed top-0 left-0 z-40 w-72 h-screen p-6 overflow-y-auto transition-transform -translate-x-full bg-green-900">
+
+        <button type="button"
+                data-drawer-hide="sidebar-menu"
+                aria-controls="sidebar-menu"
+                class="absolute top-4 right-4 flex items-center gap-1 text-white hover:text-red-400 font-semibold text-sm transition focus:outline-none">
+            <span>Salir</span>
+            <span class="text-base">❌</span>
+        </button>
+
+        <h2 class="text-3xl text-white font-bold mb-2">
+            GeoBrillo
+        </h2>
+        <p class="nav-saludo text-green-300 text-sm mb-6"></p>
+
+        <ul class="space-y-5 text-xl">
+            <li>
+                <a href="index.html" class="text-white hover:text-green-300">
+                    🏠 Inicio
+                </a>
+            </li>
+            <li>
+                <a href="mapa.html" class="text-white hover:text-green-300">
+                    🗺️ Mapa
+                </a>
+            </li>
+            <li>
+                <a href="index.html#contacto" class="text-white hover:text-green-300">
+                    ✉️ Contacto
+                </a>
+            </li>
+
+            <!-- Solo visible para usuarios logueados con rol distinto de Ciudadano -->
+            <li class="nav-solo-gestion hidden border-t border-green-700 pt-4">
+                <span class="text-green-300 text-sm uppercase tracking-wide">Gestión</span>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="listarusuarios.html" class="text-white hover:text-green-300">
+                    👤 Usuarios
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="listacontenedores.html" class="text-white hover:text-green-300">
+                    ♻️ Contenedores
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="listarcamiones.html" class="text-white hover:text-green-300">
+                    🚚 Camiones
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="listarcentros.html" class="text-white hover:text-green-300">
+                    🏭 Centros y Maquinaria
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Barra de navegación (Navbar) -->
+    <nav class="bg-white border-b border-gray-200">
+        <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4 pl-14 sm:pl-4">
+            <a href="index.html" class="flex items-center space-x-3 rtl:space-x-reverse">
+                <img src="image/Logo_GeoBrillo_Ambiental.png" class="h-10 sm:h-14 md:h-16" alt="Logo GeoBrillo" />
+                <span class="text-lg sm:text-xl md:text-2xl font-bold whitespace-nowrap text-gray-900">GeoBrillo</span>
+            </a>
+
+            <div class="flex md:order-2 items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
+                <!-- Botones para visitantes / ciudadanos -->
+                <button type="button"
+                        class="nav-invitado text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 text-center"
+                        onclick="window.location.href='login.html'">
+                    Iniciar sesión
+                </button>
+                <button type="button"
+                        class="nav-invitado text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 text-center"
+                        onclick="window.location.href='registro.html'">
+                    Registro
+                </button>
+
+                <!-- Botón para usuarios logueados -->
+                <button id="btnLogout" type="button"
+                        class="nav-con-sesion hidden text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 text-center">
+                    Cerrar sesión
+                </button>
+
+                <button data-collapse-toggle="navbar-cta" type="button"
+                        class="inline-flex items-center p-2 w-10 h-10 justify-center text-sm text-gray-500 rounded-lg md:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                        aria-controls="navbar-cta" aria-expanded="false">
+                    <span class="sr-only">Abrir menú</span>
+                    <svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 17 14">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M1 1h15M1 7h15M1 13h15"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="items-center justify-between hidden w-full md:flex md:w-auto md:order-1" id="navbar-cta">
+                <ul class="flex flex-col font-medium p-4 md:p-0 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:space-x-8 rtl:space-x-reverse md:flex-row md:mt-0 md:border-0 md:bg-white">
+                    <li>
+                        <a href="index.html" class="block py-2 px-3 md:p-0 text-white bg-green-700 rounded-sm md:bg-transparent md:text-green-700" aria-current="page">Home</a>
+                    </li>
+                    <li>
+                        <a href="#mision" class="block py-2 px-3 md:p-0 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-green-700">Nosotros</a>
+                    </li>
+                    <li>
+                        <a href="mapa.html" class="block py-2 px-3 md:p-0 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-green-700">Mapa</a>
+                    </li>
+                    <li>
+                        <a href="#contacto" class="block py-2 px-3 md:p-0 text-gray-900 rounded-sm hover:bg-gray-100 md:hover:bg-transparent md:hover:text-green-700">Contacto</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sección Portada / Hero -->
+    <section class="relative min-h-[50vh] sm:min-h-[60vh] bg-cover bg-center flex items-center justify-center p-6"
+             style="background-image: url('image/geo.png');">
+        <div class="absolute inset-0 bg-black/40"></div>
+        <div class="relative z-10 text-center text-white max-w-3xl">
+            <h1 class="mb-4 text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-none">
+                GeoBrillo Ambiental
+            </h1>
+        </div>
+    </section>
+
+    <!-- Misión -->
+    <section id="mision" class="bg-amber-50 py-8 px-4">
+        <div class="py-8 px-4 mx-auto max-w-screen-xl text-center">
+            <p class="text-base sm:text-lg md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed font-medium">
+                "Lograr un sistema estable e intuitivo, el cual pueda ser satisfactorio para nuestros clientes, logrando consolidarnos como la plataforma de referencia en la gestión de residuos de la capital."
+            </p>
+        </div>
+    </section>
+
+    <!-- Quiénes somos / Software -->
+    <section id="empresa" class="bg-white py-10 px-4 sm:px-6">
+        <div class="max-w-4xl mx-auto space-y-4">
+            <h2 class="text-3xl font-bold text-center mb-4 text-amber-900">¿Quiénes somos?</h2>
+            <p class="text-gray-700 leading-relaxed">
+                GeoBrillo Ambiental es una plataforma de gestión de residuos urbanos que conecta a
+                vecinos, cuadrillas de recolección, operadores de planta y administradores en un
+                único sistema. Nuestro software coordina el estado de los contenedores, las rutas
+                de las cuadrillas, la flota de camiones y los centros de acopio y vertederos de la
+                ciudad, para lograr una recolección más eficiente y transparente.
+            </p>
+            <p class="text-gray-700 leading-relaxed">
+                Cualquier persona puede registrarse como <strong>Ciudadano</strong> para consultar el
+                mapa de contenedores y comunicarse con nosotros. El resto de las funciones de
+                gestión (usuarios, camiones, contenedores, centros de acopio y maquinaria) están
+                reservadas al personal operativo y administrativo de GeoBrillo.
+            </p>
+        </div>
+    </section>
+
+    <!-- Opciones / Servicios -->
+    <section id="opciones" class="bg-gray-50 min-h-screen py-10 px-4 sm:px-6">
+        <h2 class="text-3xl font-bold text-center mb-8 text-amber-900">Opciones:</h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/contenedor con esclavo.jpeg" alt="Contenedores"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Contenedores</h3>
+                <p class="text-gray-600">Nuestra selección de contenedores.</p>
+                <p class="text-amber-800 font-bold mt-2 text-2xl">♻️</p>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/camion.jpeg" alt="Camiones"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Camiones</h3>
+                <p class="text-gray-600">Nuestra selección de camiones.</p>
+                <p class="text-amber-800 font-bold mt-2 text-2xl">🚚</p>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/mapa residuos.jpeg" alt="Mapa"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Mapa</h3>
+                <p class="text-gray-600">Consultá el mapa de contenedores y rutas.</p>
+                <p class="text-amber-800 font-bold mt-2 text-2xl">🗺️</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Formulario de Contacto -->
+    <section id="contacto" class="py-12 px-4 max-w-3xl mx-auto w-full">
+        <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-gray-100">
+            <h2 class="text-3xl sm:text-4xl font-extrabold text-center mb-8 text-amber-900">
+                Formulario para nuestros clientes
+            </h2>
+            <form id="contact-form" class="space-y-4">
+                <div>
+                    <label for="name" class="block mb-1 text-sm font-medium text-gray-700">Nombre:</label>
+                    <input id="name" name="name" type="text" placeholder="Tu nombre" required
+                           class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                    <label for="email" class="block mb-1 text-sm font-medium text-gray-700">E-mail:</label>
+                    <input id="email" name="email" type="email" placeholder="tucorreo@ejemplo.com" required
+                           class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                    <label for="phone" class="block mb-1 text-sm font-medium text-gray-700">Teléfono:</label>
+                    <input id="phone" name="phone" type="tel" placeholder="099 000 000"
+                           class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500" />
+                </div>
+                <div>
+                    <label for="message" class="block mb-1 text-sm font-medium text-gray-700">Mensaje:</label>
+                    <textarea id="message" name="message" rows="4" placeholder="Escribe tu mensaje…" required
+                              class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
+                </div>
+                <button type="submit"
+                        class="w-full py-3 px-5 text-sm font-medium text-center text-white rounded-lg bg-green-700 hover:bg-green-800 transition">
+                    Enviar
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', renderizarNavSegunSesion);
+
+        document.getElementById('contact-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+            alert('¡Gracias por tu mensaje! Te contactaremos a la brevedad.');
+            this.reset();
+        });
+    </script>
+
+</body>
+</html>
