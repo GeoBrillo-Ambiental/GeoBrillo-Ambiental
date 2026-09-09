@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Usuarios</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
+                Listado de Usuarios 👤
+            </h1>
+            <a href="usuarios.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar Usuario
+            </a>
+        </div>
+
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Nombre</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Apellido</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Usuario</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Email</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Rol</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Cuadrilla</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaUsuarios" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="8" class="py-4 text-gray-500">Cargando usuarios...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de edición -->
+    <div id="modalEditar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Editar Usuario</h3>
+            <form id="formEditar" class="space-y-4">
+                <input type="hidden" name="id" id="editId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Primer Nombre</label>
+                    <input type="text" name="pri_nom" id="editPriNom" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Primer Apellido</label>
+                    <input type="text" name="pri_ape" id="editPriApe" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email" id="editEmail" class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Rol (Id_Rol)</label>
+                    <select name="id_rol" id="editIdRol" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="1">1 - Ciudadano</option>
+                        <option value="2">2 - Chofer</option>
+                        <option value="3">3 - Operador</option>
+                        <option value="4">4 - Cuadrilla</option>
+                        <option value="5">5 - Administrador</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">ID de Cuadrilla</label>
+                    <input type="number" name="id_cuadrilla" id="editIdCuadrilla" class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await protegerVistaDeGestion();
+            listar();
+        });
+
+        function listar() {
+            fetch(`${API_USUARIOS}/usuarioapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaUsuarios");
+                    tabla.innerHTML = "";
+                    const usuarios = data.data || [];
+
+                    if (usuarios.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="8" class="py-4 text-gray-500">No hay usuarios registrados.</td></tr>`;
+                        return;
+                    }
+
+                    usuarios.forEach(u => {
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-2">${u.Id_Usuario ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Pri_Nom ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Pri_Ape ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Nom_Usuario ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Email ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Nombre_Rol ?? u.Id_Rol ?? '-'}</td>
+                                <td class="border px-4 py-2">${u.Id_Cuadrilla ?? '-'}</td>
+                                <td class="border px-4 py-2 space-x-1">
+                                    <button onclick='abrirModal(${JSON.stringify(u)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminar(${u.Id_Usuario})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaUsuarios").innerHTML = `<tr><td colspan="8" class="py-4 text-red-600 font-bold">Error al cargar la lista de usuarios.</td></tr>`;
+                    console.error(err);
+                });
+        }
+
+        function abrirModal(u) {
+            document.getElementById("editId").value = u.Id_Usuario;
+            document.getElementById("editPriNom").value = u.Pri_Nom || '';
+            document.getElementById("editPriApe").value = u.Pri_Ape || '';
+            document.getElementById("editEmail").value = u.Email || '';
+            document.getElementById("editIdRol").value = u.Id_Rol || 1;
+            document.getElementById("editIdCuadrilla").value = u.Id_Cuadrilla || '';
+            document.getElementById("modalEditar").classList.remove("hidden");
+        }
+
+        function cerrarModal() {
+            document.getElementById("modalEditar").classList.add("hidden");
+        }
+
+        document.getElementById("formEditar").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_USUARIOS}/usuarioapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) {
+                        cerrarModal();
+                        listar();
+                    }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function eliminar(id) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este usuario?")) return;
+
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_USUARIOS}/usuarioapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => { alert(data.mensaje); listar(); })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+    </script>
+</body>
+</html>

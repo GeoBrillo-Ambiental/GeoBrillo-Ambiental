@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Centros y Maquinaria</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-8">
+
+        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
+                Centros de Acopio y Maquinaria 🏭
+            </h1>
+            <a href="centros.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar
+            </a>
+        </div>
+
+        <!-- ============== CENTROS ============== -->
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Centros de Acopio / Vertedero</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Nombre</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Dirección</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Tipo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Cap. Total</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Cap. Actual</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaCentros" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="7" class="py-4 text-gray-500">Cargando centros...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ============== MAQUINARIA ============== -->
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Maquinaria básica</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Nombre</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Tipo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Centro</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaMaquinaria" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="6" class="py-4 text-gray-500">Cargando maquinaria...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de edición de Centro -->
+    <div id="modalEditarCentro" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Editar Centro</h3>
+            <form id="formEditarCentro" class="space-y-4">
+                <input type="hidden" name="id" id="editCentroId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" name="nombre" id="editCentroNombre" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Dirección</label>
+                    <input type="text" name="direccion" id="editCentroDireccion" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Tipo</label>
+                    <select name="tipo" id="editCentroTipo" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Vertedero">Vertedero</option>
+                        <option value="Acopio">Acopio</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad Total</label>
+                    <input type="number" name="cap_total" id="editCentroCapTotal" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad Actual</label>
+                    <input type="number" name="cap_actual" id="editCentroCapActual" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">Guardar Cambios</button>
+                    <button type="button" onclick="cerrarModalCentro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal de edición de Maquinaria -->
+    <div id="modalEditarMaquinaria" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Editar Maquinaria</h3>
+            <form id="formEditarMaquinaria" class="space-y-4">
+                <input type="hidden" name="id" id="editMaqId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Nombre</label>
+                    <input type="text" name="nombre" id="editMaqNombre" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Tipo</label>
+                    <input type="text" name="tipo" id="editMaqTipo" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
+                    <select name="estado" id="editMaqEstado" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Operativa">Operativa</option>
+                        <option value="En mantenimiento">En mantenimiento</option>
+                        <option value="Fuera de servicio">Fuera de servicio</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Id de Centro</label>
+                    <input type="number" name="id_centro" id="editMaqIdCentro" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">Guardar Cambios</button>
+                    <button type="button" onclick="cerrarModalMaquinaria()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await protegerVistaDeGestion();
+            listarCentros();
+            listarMaquinaria();
+        });
+
+        function listarCentros() {
+            fetch(`${API_GESTION}/centroapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaCentros");
+                    tabla.innerHTML = "";
+                    const centros = data.data || [];
+
+                    if (centros.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="7" class="py-4 text-gray-500">No hay centros registrados.</td></tr>`;
+                        return;
+                    }
+
+                    centros.forEach(c => {
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-2">${c.Id_Centro ?? '-'}</td>
+                                <td class="border px-4 py-2">${c.NombreC ?? '-'}</td>
+                                <td class="border px-4 py-2">${c.DireccionC ?? '-'}</td>
+                                <td class="border px-4 py-2">${c.TipoCentro ?? '-'}</td>
+                                <td class="border px-4 py-2">${c.CapTotal ?? '-'}</td>
+                                <td class="border px-4 py-2">${c.CapActual ?? '-'}</td>
+                                <td class="border px-4 py-2 space-x-1">
+                                    <button onclick='abrirModalCentro(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminarCentro(${c.Id_Centro})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaCentros").innerHTML = `<tr><td colspan="7" class="py-4 text-red-600 font-bold">Error al cargar los centros.</td></tr>`;
+                    console.error(err);
+                });
+        }
+
+        function abrirModalCentro(c) {
+            document.getElementById("editCentroId").value = c.Id_Centro;
+            document.getElementById("editCentroNombre").value = c.NombreC || '';
+            document.getElementById("editCentroDireccion").value = c.DireccionC || '';
+            document.getElementById("editCentroTipo").value = c.TipoCentro || 'Vertedero';
+            document.getElementById("editCentroCapTotal").value = c.CapTotal || '';
+            document.getElementById("editCentroCapActual").value = c.CapActual || '';
+            document.getElementById("modalEditarCentro").classList.remove("hidden");
+        }
+
+        function cerrarModalCentro() {
+            document.getElementById("modalEditarCentro").classList.add("hidden");
+        }
+
+        document.getElementById("formEditarCentro").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/centroapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) { cerrarModalCentro(); listarCentros(); }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function listarMaquinaria() {
+            fetch(`${API_GESTION}/maquinariaapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaMaquinaria");
+                    tabla.innerHTML = "";
+                    const maquinaria = data.data || [];
+
+                    if (maquinaria.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="6" class="py-4 text-gray-500">No hay maquinaria registrada.</td></tr>`;
+                        return;
+                    }
+
+                    maquinaria.forEach(m => {
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-2">${m.Id_Maquinaria ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.NombreMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.TipoMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.EstadoMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.NombreC ?? m.Id_Centro ?? '-'}</td>
+                                <td class="border px-4 py-2 space-x-1">
+                                    <button onclick='abrirModalMaquinaria(${JSON.stringify(m)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminarMaquinaria(${m.Id_Maquinaria})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaMaquinaria").innerHTML = `<tr><td colspan="6" class="py-4 text-red-600 font-bold">Error al cargar la maquinaria.</td></tr>`;
+                    console.error(err);
+                });
+        }
+
+        function abrirModalMaquinaria(m) {
+            document.getElementById("editMaqId").value = m.Id_Maquinaria;
+            document.getElementById("editMaqNombre").value = m.NombreMaq || '';
+            document.getElementById("editMaqTipo").value = m.TipoMaq || '';
+            document.getElementById("editMaqEstado").value = m.EstadoMaq || 'Operativa';
+            document.getElementById("editMaqIdCentro").value = m.Id_Centro || '';
+            document.getElementById("modalEditarMaquinaria").classList.remove("hidden");
+        }
+
+        function cerrarModalMaquinaria() {
+            document.getElementById("modalEditarMaquinaria").classList.add("hidden");
+        }
+
+        document.getElementById("formEditarMaquinaria").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/maquinariaapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) { cerrarModalMaquinaria(); listarMaquinaria(); }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function eliminarCentro(id) {
+            if (!confirm("¿Eliminar este centro?")) return;
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/centroapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => { alert(data.mensaje); listarCentros(); })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+
+        function eliminarMaquinaria(id) {
+            if (!confirm("¿Eliminar esta maquinaria?")) return;
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/maquinariaapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => { alert(data.mensaje); listarMaquinaria(); })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+    </script>
+
+</body>
+</html>

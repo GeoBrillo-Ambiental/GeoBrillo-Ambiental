@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # 1. SERVICIO DE BASE DE DATOS (MySQL 8)
+  db:
+    image: mysql:8.0
+    container_name: geobrillo_mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: geobrillo
+      MYSQL_USER: sigeru_user
+      MYSQL_PASSWORD: sigeru_password_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # 2. SERVICIO API DE USUARIOS (autenticación, registro, CRUD de Usuario)
+  api-usuarios:
+    build:
+      context: ./api-usuarios
+      dockerfile: Dockerfile
+    container_name: geobrillo_api_usuarios
+    ports:
+      - "8081:80"
+    volumes:
+      - ./api-usuarios:/var/www/html
+    environment:
+      DB_HOST: db
+      DB_NAME: geobrillo
+      DB_USER: sigeru_user
+      DB_PASS: sigeru_password_123
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. SERVICIO API DE GESTIÓN (camiones, contenedores, centros y maquinaria)
+  api-gestion:
+    build:
+      context: ./api-gestion
+      dockerfile: Dockerfile
+    container_name: geobrillo_api_gestion
+    ports:
+      - "8082:80"
+    volumes:
+      - ./api-gestion:/var/www/html
+    environment:
+      DB_HOST: db
+      DB_NAME: geobrillo
+      DB_USER: sigeru_user
+      DB_PASS: sigeru_password_123
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 4. SERVICIO FRONTEND Y LANDING PAGE
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: geobrillo_frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-usuarios
+      - api-gestion
+
+# VOLUMEN PERSISTENTE PARA MYSQL
+volumes:
+  db_data:

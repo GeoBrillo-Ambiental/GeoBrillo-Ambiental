@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="h-full bg-white-900">
+
+<div class="flex min-h-full justify-center items-center py-10">
+
+<div class="w-full max-w-xl bg-white rounded-2xl shadow-2xl p-8">
+
+    <img src="image/Logo_GeoBrillo_Ambiental.png"
+         class="mx-auto h-32 mb-6">
+
+    <h1 class="text-3xl font-bold text-center text-black-800 mb-8">
+        Registro de Usuario
+    </h1>
+
+    <div id="mensajeError" class="hidden mb-6 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-center text-sm font-medium"></div>
+
+    <form id="formRegistro" class="space-y-5">
+
+        <div>
+            <label class="font-semibold">Primer Nombre</label>
+            <input type="text" name="pri_nom" required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <div>
+            <label class="font-semibold">Primer Apellido</label>
+            <input type="text" name="pri_ape" required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <div>
+            <label class="font-semibold">Nombre de Usuario</label>
+            <input type="text" name="nom_usuario" required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <div>
+            <label class="font-semibold">Contraseña</label>
+            <input type="password" name="password" required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <div>
+            <label class="font-semibold">Correo Electrónico</label>
+            <input type="email" name="email" required
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <div>
+            <label class="font-semibold block mb-3">
+                Seleccione un Rol
+            </label>
+
+            <div class="space-y-3">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="id_rol" value="1" required checked class="w-5 h-5 accent-green-600">
+                    <span>1 - Ciudadano <span class="text-gray-500 text-sm">(solo mapa, contacto y consultas)</span></span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="id_rol" value="2" class="w-5 h-5 accent-green-600">
+                    <span>2 - Chofer</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="id_rol" value="3" class="w-5 h-5 accent-green-600">
+                    <span>3 - Operador de Planta</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <input type="radio" name="id_rol" value="4" class="w-5 h-5 accent-green-600">
+                    <span>4 - Integrante de una Cuadrilla</span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <label class="font-semibold">
+                ID de Cuadrilla
+            </label>
+            <input type="number" name="id_cuadrilla"
+                   placeholder="Déjelo vacío si no pertenece a una cuadrilla"
+                   class="w-full mt-2 border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-600">
+        </div>
+
+        <button type="submit"
+                class="w-full bg-green-700 text-white font-bold py-3 rounded-xl hover:bg-green-800 transition">
+            Registrarse
+        </button>
+
+    </form>
+
+</div>
+
+</div>
+
+<script src="js/auth.js"></script>
+<script>
+    const cartel = document.getElementById("mensajeError");
+
+    document.getElementById("formRegistro").addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const datos = new FormData(this);
+
+        fetch(`${API_USUARIOS}/registro.php`, {
+            method: "POST",
+            body: datos
+        })
+        .then(res => res.json())
+        .then(resultado => {
+            if (resultado.exito) {
+                window.location.href = "login.html?registrado=1";
+            } else {
+                cartel.textContent = resultado.mensaje;
+                cartel.classList.remove("hidden");
+            }
+        })
+        .catch(err => {
+            cartel.textContent = "Error al conectar con el servidor: " + err.message;
+            cartel.classList.remove("hidden");
+        });
+    });
+</script>
+
+</body>
+</html>

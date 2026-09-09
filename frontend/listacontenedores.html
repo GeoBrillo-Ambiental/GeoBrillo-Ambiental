@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listado de Contenedores</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+
+        <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
+                Listado de Contenedores ♻️
+            </h1>
+            <a href="contenedores.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Agregar Contenedor
+            </a>
+        </div>
+
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full border border-gray-300 text-sm sm:text-base">
+                    <thead class="bg-green-700 text-white">
+                        <tr>
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Tipo de residuo</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Id de la ruta</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaContenedores" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="6" class="py-4 text-gray-500">Cargando contenedores...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modal de edición -->
+    <div id="modalEditar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Editar Contenedor</h3>
+            <form id="formEditar" class="space-y-4">
+                <input type="hidden" name="id" id="editId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
+                    <select name="estado" id="editEstado" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Funcional">Funcional</option>
+                        <option value="Roto">Roto</option>
+                        <option value="Desbordado">Desbordado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Tipo de Residuo</label>
+                    <select name="residuo" id="editResiduo" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Reciclable">Reciclable</option>
+                        <option value="Mezclados">Mezclados</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad</label>
+                    <input type="number" name="capacidad" id="editCapacidad" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Id de Ruta</label>
+                    <input type="number" name="id_ruta" id="editIdRuta" required class="w-full border border-gray-300 rounded-lg p-3">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
+                        Guardar Cambios
+                    </button>
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">
+                        Cancelar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            await protegerVistaDeGestion();
+            listar();
+        });
+
+        function listar() {
+            fetch(`${API_GESTION}/contenedorapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaContenedores");
+                    tabla.innerHTML = "";
+                    const contenedores = data.data || [];
+
+                    if (contenedores.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="6" class="py-4 text-gray-500">No hay contenedores registrados.</td></tr>`;
+                        return;
+                    }
+
+                    contenedores.forEach(c => {
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-3">${c.Id_Contenedor ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.EstadoCont ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.CapContenedor ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.TipoReciduo ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.Id_Ruta ?? '-'}</td>
+                                <td class="border px-4 py-3 space-x-1">
+                                    <button onclick='abrirModal(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminar(${c.Id_Contenedor})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaContenedores").innerHTML = `<tr><td colspan="6" class="py-4 text-red-600 font-bold">Error al cargar la lista de contenedores.</td></tr>`;
+                    console.error("❌ Error al traer los datos de contenedorapi.php:", err);
+                });
+        }
+
+        function abrirModal(c) {
+            document.getElementById("editId").value = c.Id_Contenedor;
+            document.getElementById("editEstado").value = c.EstadoCont || 'Funcional';
+            document.getElementById("editResiduo").value = c.TipoReciduo || 'Reciclable';
+            document.getElementById("editCapacidad").value = c.CapContenedor || '';
+            document.getElementById("editIdRuta").value = c.Id_Ruta || '';
+            document.getElementById("modalEditar").classList.remove("hidden");
+        }
+
+        function cerrarModal() {
+            document.getElementById("modalEditar").classList.add("hidden");
+        }
+
+        document.getElementById("formEditar").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/contenedorapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) {
+                        cerrarModal();
+                        listar();
+                    }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function eliminar(id) {
+            if (!confirm("¿Estás seguro de que deseas eliminar este contenedor?")) return;
+
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/contenedorapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => { alert(data.mensaje); listar(); })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+    </script>
+
+</body>
+</html>

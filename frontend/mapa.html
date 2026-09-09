@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa - GeoBrillo</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2 font-bold text-lg text-green-700">
+            ← GeoBrillo
+        </a>
+        <h1 class="text-xl font-bold text-green-700">🗺️ Mapa de Contenedores y Rutas</h1>
+        <span></span>
+    </nav>
+
+    <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
+        <p class="text-gray-600">
+            Ubicación de referencia de los centros de acopio, vertederos y zonas de recolección de
+            GeoBrillo Ambiental en Montevideo. Hacé clic en el mapa para ver las coordenadas de
+            cualquier punto.
+        </p>
+
+        <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
+            <div id="mapa" class="w-full" style="height: 500px;"></div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Mapa centrado en Montevideo, Uruguay
+        var mapa = L.map('mapa').setView([-34.9011, -56.1645], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> colaboradores'
+        }).addTo(mapa);
+
+        // Puntos de referencia de los centros de acopio/vertedero (seed de la base de datos)
+        var centros = [
+            { nombre: "Planta Felipe Cardoso (Vertedero)", lat: -34.8747, lon: -56.1010 },
+            { nombre: "Centro de Acopio Buceo", lat: -34.9083, lon: -56.1358 }
+        ];
+
+        centros.forEach(function (c) {
+            L.marker([c.lat, c.lon]).addTo(mapa).bindPopup(c.nombre);
+        });
+
+        mapa.on('click', function (e) {
+            var lat = e.latlng.lat.toFixed(5);
+            var lon = e.latlng.lng.toFixed(5);
+            L.popup()
+                .setLatLng(e.latlng)
+                .setContent(`Coordenadas seleccionadas:<br>${lat}, ${lon}`)
+                .openOn(mapa);
+        });
+    </script>
+
+</body>
+</html>

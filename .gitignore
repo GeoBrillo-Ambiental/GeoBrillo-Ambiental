@@ -1,0 +1,23 @@
+# --- Sistema operativo / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# --- PHP / Composer (si en algún momento agregan dependencias) ---
+vendor/
+composer.lock
+
+# --- Variables de entorno con credenciales reales ---
+.env
+.env.local
+
+# --- Logs ---
+*.log
+
+# --- Dumps de la base de datos generados en desarrollo local ---
+database/*.local.sql
+database/backup_*.sql
+
+# --- Node (si el frontend en algún momento usa build tools) ---
+node_modules/
