@@ -61,8 +61,8 @@ CREATE TABLE Zona (
 -- ---------------------------------------------------------------------
 CREATE TABLE CAcopioVertedero (
   Id_Centro    INT AUTO_INCREMENT PRIMARY KEY,
-  NombreC      VARCHAR(20) NOT NULL,
-  DireccionC   VARCHAR(40) NOT NULL,
+  NombreC      VARCHAR(50) NOT NULL,
+  DireccionC   VARCHAR(60) NOT NULL,
   TipoCentro   VARCHAR(20) NOT NULL,
   CapTotal     INT NOT NULL,
   CapActual    INT NOT NULL
