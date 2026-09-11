@@ -121,3 +121,13 @@ if ($tokenAdmin) {
 } else {
     echo "⚠️  No se pudo loguear como Administrador (¿corriste crear_admin.php?), se omite el paso 5.\n";
 }
+
+// --- Paso 6: el Ciudadano SÍ puede listar contenedores/camiones/centros
+//     (solo lectura, para el Home "Opciones"), aunque siga sin poder
+//     insertar/editar/eliminar (ya verificado en el paso 3) ---
+list($respListarCiud, $statusListarCiud) = get("$API_GESTION/contenedorapi.php?accion=listar&token=$tokenCiudadano");
+if (strpos($statusListarCiud, '200') !== false && !empty($respListarCiud['exito'])) {
+    echo "✅ Ciudadano SÍ puede listar contenedores en modo solo lectura (200 OK) - correcto\n";
+} else {
+    echo "❌ Ciudadano debería poder listar contenedores (solo lectura). Status: $statusListarCiud\n";
+}

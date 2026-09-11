@@ -18,7 +18,7 @@
             <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
                 Centros de Acopio y Maquinaria 🏭
             </h1>
-            <a href="centros.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+            <a href="centros.html" id="btnAgregar" class="hidden bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
                 + Agregar
             </a>
         </div>
@@ -36,7 +36,7 @@
                             <th class="px-4 py-3 border whitespace-nowrap">Tipo</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Cap. Total</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Cap. Actual</th>
-                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thAccionesCentro">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCentros" class="text-center bg-white divide-y divide-gray-200">
@@ -58,7 +58,7 @@
                             <th class="px-4 py-3 border whitespace-nowrap">Tipo</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Centro</th>
-                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thAccionesMaquinaria">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaMaquinaria" class="text-center bg-white divide-y divide-gray-200">
@@ -143,8 +143,16 @@
 
     <script src="js/auth.js"></script>
     <script>
+        let esGestion = false;
+
         document.addEventListener('DOMContentLoaded', async () => {
-            await protegerVistaDeGestion();
+            const usuario = await protegerVistaConSesion();
+            esGestion = puedeGestionar(usuario);
+
+            document.getElementById('btnAgregar').classList.toggle('hidden', !esGestion);
+            document.getElementById('thAccionesCentro').classList.toggle('hidden', !esGestion);
+            document.getElementById('thAccionesMaquinaria').classList.toggle('hidden', !esGestion);
+
             listarCentros();
             listarMaquinaria();
         });
@@ -158,11 +166,20 @@
                     const centros = data.data || [];
 
                     if (centros.length === 0) {
-                        tabla.innerHTML = `<tr><td colspan="7" class="py-4 text-gray-500">No hay centros registrados.</td></tr>`;
+                        tabla.innerHTML = `<tr><td colspan="${esGestion ? 7 : 6}" class="py-4 text-gray-500">No hay centros registrados.</td></tr>`;
                         return;
                     }
 
                     centros.forEach(c => {
+                        const accionesHtml = esGestion ? `
+                                <td class="border px-4 py-2 space-x-1">
+                                    <button onclick='abrirModalCentro(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Editar
+                                    </button>
+                                    <button onclick="eliminarCentro(${c.Id_Centro})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>` : '';
                         tabla.innerHTML += `
                             <tr class="hover:bg-green-50">
                                 <td class="border px-4 py-2">${c.Id_Centro ?? '-'}</td>
@@ -171,14 +188,7 @@
                                 <td class="border px-4 py-2">${c.TipoCentro ?? '-'}</td>
                                 <td class="border px-4 py-2">${c.CapTotal ?? '-'}</td>
                                 <td class="border px-4 py-2">${c.CapActual ?? '-'}</td>
-                                <td class="border px-4 py-2 space-x-1">
-                                    <button onclick='abrirModalCentro(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
-                                        Editar
-                                    </button>
-                                    <button onclick="eliminarCentro(${c.Id_Centro})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
-                                        Eliminar
-                                    </button>
-                                </td>
+                                ${accionesHtml}
                             </tr>`;
                     });
                 })
@@ -226,18 +236,12 @@
                     const maquinaria = data.data || [];
 
                     if (maquinaria.length === 0) {
-                        tabla.innerHTML = `<tr><td colspan="6" class="py-4 text-gray-500">No hay maquinaria registrada.</td></tr>`;
+                        tabla.innerHTML = `<tr><td colspan="${esGestion ? 6 : 5}" class="py-4 text-gray-500">No hay maquinaria registrada.</td></tr>`;
                         return;
                     }
 
                     maquinaria.forEach(m => {
-                        tabla.innerHTML += `
-                            <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-2">${m.Id_Maquinaria ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.NombreMaq ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.TipoMaq ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.EstadoMaq ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.NombreC ?? m.Id_Centro ?? '-'}</td>
+                        const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-2 space-x-1">
                                     <button onclick='abrirModalMaquinaria(${JSON.stringify(m)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
@@ -245,7 +249,15 @@
                                     <button onclick="eliminarMaquinaria(${m.Id_Maquinaria})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
                                         Eliminar
                                     </button>
-                                </td>
+                                </td>` : '';
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-2">${m.Id_Maquinaria ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.NombreMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.TipoMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.EstadoMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${m.NombreC ?? m.Id_Centro ?? '-'}</td>
+                                ${accionesHtml}
                             </tr>`;
                     });
                 })

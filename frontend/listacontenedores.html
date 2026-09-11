@@ -18,7 +18,7 @@
             <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
                 Listado de Contenedores ♻️
             </h1>
-            <a href="contenedores.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+            <a href="contenedores.html" id="btnAgregar" class="hidden bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
                 + Agregar Contenedor
             </a>
         </div>
@@ -33,7 +33,7 @@
                             <th class="px-4 py-3 border whitespace-nowrap">Capacidad</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Tipo de residuo</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Id de la ruta</th>
-                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thAcciones">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaContenedores" class="text-center bg-white divide-y divide-gray-200">
@@ -88,8 +88,17 @@
 
     <script src="js/auth.js"></script>
     <script>
+        let esGestion = false;
+
         document.addEventListener('DOMContentLoaded', async () => {
-            await protegerVistaDeGestion();
+            const usuario = await protegerVistaConSesion();
+            esGestion = puedeGestionar(usuario);
+
+            // Si es Ciudadano: modo solo lectura, sin botón de Agregar
+            // ni columna de Acciones.
+            document.getElementById('btnAgregar').classList.toggle('hidden', !esGestion);
+            document.getElementById('thAcciones').classList.toggle('hidden', !esGestion);
+
             listar();
         });
 
@@ -100,20 +109,15 @@
                     const tabla = document.getElementById("tablaContenedores");
                     tabla.innerHTML = "";
                     const contenedores = data.data || [];
+                    const colspan = esGestion ? 6 : 5;
 
                     if (contenedores.length === 0) {
-                        tabla.innerHTML = `<tr><td colspan="6" class="py-4 text-gray-500">No hay contenedores registrados.</td></tr>`;
+                        tabla.innerHTML = `<tr><td colspan="${colspan}" class="py-4 text-gray-500">No hay contenedores registrados.</td></tr>`;
                         return;
                     }
 
                     contenedores.forEach(c => {
-                        tabla.innerHTML += `
-                            <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-3">${c.Id_Contenedor ?? '-'}</td>
-                                <td class="border px-4 py-3">${c.EstadoCont ?? '-'}</td>
-                                <td class="border px-4 py-3">${c.CapContenedor ?? '-'}</td>
-                                <td class="border px-4 py-3">${c.TipoReciduo ?? '-'}</td>
-                                <td class="border px-4 py-3">${c.Id_Ruta ?? '-'}</td>
+                        const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-3 space-x-1">
                                     <button onclick='abrirModal(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
@@ -121,7 +125,15 @@
                                     <button onclick="eliminar(${c.Id_Contenedor})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
                                         Eliminar
                                     </button>
-                                </td>
+                                </td>` : '';
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-3">${c.Id_Contenedor ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.EstadoCont ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.CapContenedor ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.TipoReciduo ?? '-'}</td>
+                                <td class="border px-4 py-3">${c.Id_Ruta ?? '-'}</td>
+                                ${accionesHtml}
                             </tr>`;
                     });
                 })

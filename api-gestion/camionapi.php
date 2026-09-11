@@ -20,7 +20,7 @@ try {
     switch ($accion) {
 
         case 'listar':
-            Auth::requireGestion($token);
+            Auth::requireLogin($token);
             echo json_encode($controlador->obtenerCamiones());
             break;
 

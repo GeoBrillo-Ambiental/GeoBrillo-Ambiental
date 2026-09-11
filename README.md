@@ -35,17 +35,25 @@ microservicio corre en un puerto distinto:
    (que ambas APIs comparten porque usan la misma base de datos).
 
 **Regla de negocio obligatoria:** un usuario con rol **Ciudadano**
-puede iniciar sesión, pero **no tiene acceso a ningún CRUD** (ni
-Usuarios, ni Camiones, ni Contenedores, ni Centros/Maquinaria). Sus
-únicos permisos son:
-- Ver el **Mapa** (`mapa.html`, público).
+puede iniciar sesión, pero **no tiene acceso de gestión a ningún CRUD**
+(no puede insertar, editar ni eliminar Usuarios, Camiones,
+Contenedores ni Centros/Maquinaria). Sus permisos son:
+- Ver el **Mapa** (`mapa.html`, público, sin necesidad de sesión).
+- Ver en **modo solo lectura** los listados de Contenedores, Camiones
+  y Centros de Acopio/Maquinaria (accesibles desde las tarjetas de
+  "Opciones" del Home) — puede consultarlos, pero no ve los botones
+  de Agregar/Editar/Eliminar.
 - **Registrarse** e **iniciar sesión**.
 - Ver la información de la empresa/software (sección "Quiénes somos"
   del home).
 - Usar el **formulario de contacto**.
 
+El listado de **Usuarios** es la única excepción: sigue totalmente
+restringido a roles de gestión, ya que expone datos de otras cuentas.
+
 Cualquier otro rol (Chofer, Operador, Cuadrilla, Administrador) sí
-puede gestionar los 4 CRUD. Esta regla está aplicada **dos veces**:
+puede gestionar (insertar/editar/eliminar) los 4 CRUD. Esta regla está
+aplicada **dos veces**:
 
 - **Del lado del cliente** (`frontend/js/auth.js`): oculta las
   opciones de gestión del menú y redirige si alguien entra a mano a
@@ -77,10 +85,10 @@ propio Home arma el menú dinámicamente según el rol devuelto por
 
 | Endpoint | Método | Protección | Función |
 |---|---|---|---|
-| `camionapi.php` | GET/POST | **Login + rol ≠ Ciudadano** | CRUD de Camión |
-| `contenedorapi.php` | GET/POST | **Login + rol ≠ Ciudadano** | CRUD de Contenedor |
-| `centroapi.php` | GET/POST | **Login + rol ≠ Ciudadano** | CRUD de Centro de Acopio/Vertedero |
-| `maquinariaapi.php` | GET/POST | **Login + rol ≠ Ciudadano** | CRUD de Maquinaria básica |
+| `camionapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Camión |
+| `contenedorapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Contenedor |
+| `centroapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Centro de Acopio/Vertedero |
+| `maquinariaapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Maquinaria básica |
 
 Todos los endpoints de gestión aceptan `?accion=listar|insertar|actualizar|eliminar`
 y devuelven siempre `{"exito": true/false, "mensaje": "...", "data": [...]}`.

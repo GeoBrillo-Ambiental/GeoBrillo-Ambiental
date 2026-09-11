@@ -18,7 +18,7 @@
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
                 Lista de Camiones 🚚
             </h2>
-            <a href="camiones.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+            <a href="camiones.html" id="btnAgregar" class="hidden bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
                 + Agregar Camión
             </a>
         </div>
@@ -32,7 +32,7 @@
                             <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Modelo</th>
                             <th class="px-4 py-3 border whitespace-nowrap">Carga (C_Carga)</th>
-                            <th class="px-4 py-3 border whitespace-nowrap">Acciones</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thAcciones">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tablaCamiones" class="text-center bg-white divide-y divide-gray-200">
@@ -83,8 +83,15 @@
 
     <script src="js/auth.js"></script>
     <script>
+        let esGestion = false;
+
         document.addEventListener('DOMContentLoaded', async () => {
-            await protegerVistaDeGestion();
+            const usuario = await protegerVistaConSesion();
+            esGestion = puedeGestionar(usuario);
+
+            document.getElementById('btnAgregar').classList.toggle('hidden', !esGestion);
+            document.getElementById('thAcciones').classList.toggle('hidden', !esGestion);
+
             listar();
         });
 
@@ -95,19 +102,15 @@
                     const tabla = document.getElementById("tablaCamiones");
                     tabla.innerHTML = "";
                     const camiones = data.data || [];
+                    const colspan = esGestion ? 5 : 4;
 
                     if (camiones.length === 0) {
-                        tabla.innerHTML = `<tr><td colspan="5" class="py-4 text-gray-500">No hay camiones registrados.</td></tr>`;
+                        tabla.innerHTML = `<tr><td colspan="${colspan}" class="py-4 text-gray-500">No hay camiones registrados.</td></tr>`;
                         return;
                     }
 
                     camiones.forEach(camion => {
-                        tabla.innerHTML += `
-                            <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-3">${camion.Id_Camion ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.EstadoCam ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.Modelo ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.C_Carga ?? '-'}</td>
+                        const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-3 space-x-1">
                                     <button onclick='abrirModal(${JSON.stringify(camion)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
@@ -115,7 +118,14 @@
                                     <button onclick="eliminar(${camion.Id_Camion})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
                                         Eliminar
                                     </button>
-                                </td>
+                                </td>` : '';
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-3">${camion.Id_Camion ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.EstadoCam ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.Modelo ?? '-'}</td>
+                                <td class="border px-4 py-3">${camion.C_Carga ?? '-'}</td>
+                                ${accionesHtml}
                             </tr>`;
                     });
                 })

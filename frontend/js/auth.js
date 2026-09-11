@@ -72,6 +72,26 @@ async function cerrarSesion() {
 }
 
 /**
+ * Protege una vista de SOLO LECTURA (por ejemplo, los listados de
+ * Contenedores, Camiones y Centros/Maquinaria, que desde el Home son
+ * visibles para CUALQUIER rol logueado, incluido Ciudadano). A
+ * diferencia de protegerVistaDeGestion(), esta función NO bloquea al
+ * Ciudadano — solo exige que haya una sesión iniciada. Es la misma
+ * regla que aplican los endpoints de listar en api-gestion (ver
+ * Auth::requireLogin). Devuelve el objeto usuario para que la propia
+ * página decida si mostrar o no los botones de Agregar/Editar/Eliminar
+ * según puedeGestionar(usuario).
+ */
+async function protegerVistaConSesion() {
+    const usuario = await obtenerSesionActual();
+    if (!usuario) {
+        window.location.href = 'login.html';
+        return null;
+    }
+    return usuario;
+}
+
+/**
  * Protege una vista de gestión (usuarios/camiones/contenedores/centros).
  * Se llama al principio de cada página protegida. Si no hay sesión o
  * el rol es Ciudadano, redirige al home. Esta es una capa de UX: la
