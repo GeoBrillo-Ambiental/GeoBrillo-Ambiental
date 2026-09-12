@@ -185,7 +185,7 @@ CREATE TABLE Incidencia (
   Descripcion    VARCHAR(120),
   FchaReportado  DATE NOT NULL,
   FchaResuelto   DATE,
-  Id_Cuadrilla   INT NOT NULL,
+  Id_Cuadrilla   INT NULL,
   Id_Usuario     INT NOT NULL,
   Id_Contenedor  INT NOT NULL,
 

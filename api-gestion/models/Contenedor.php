@@ -47,4 +47,15 @@ class Contenedor {
         $stmt = $this->db->prepare("DELETE FROM Contenedor WHERE Id_Contenedor = :id");
         return $stmt->execute([':id' => $id]);
     }
+
+    /**
+     * Actualiza SOLO el estado del contenedor (sin tocar capacidad,
+     * tipo ni ruta). La usa IncidenciaControlador cuando un Ciudadano
+     * reporta una incidencia: el contenedor pasa a reflejar el
+     * problema reportado (ej. "Desbordado" o "Roto").
+     */
+    public function actualizarEstado($id, $estado) {
+        $stmt = $this->db->prepare("UPDATE Contenedor SET EstadoCont = :estado WHERE Id_Contenedor = :id");
+        return $stmt->execute([':estado' => $estado, ':id' => $id]);
+    }
 }

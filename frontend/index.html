@@ -58,6 +58,13 @@
                 </a>
             </li>
 
+            <!-- Visible para CUALQUIER usuario logueado (incluido Ciudadano) -->
+            <li class="nav-con-sesion hidden border-t border-green-700 pt-4">
+                <a href="listarincidencias.html" class="text-white hover:text-green-300">
+                    ⚠️ Incidencias
+                </a>
+            </li>
+
             <!-- Solo visible para usuarios logueados con rol distinto de Ciudadano -->
             <li class="nav-solo-gestion hidden border-t border-green-700 pt-4">
                 <span class="text-green-300 text-sm uppercase tracking-wide">Gestión</span>
@@ -185,7 +192,7 @@
     <section id="opciones" class="bg-gray-50 min-h-screen py-10 px-4 sm:px-6">
         <h2 class="text-3xl font-bold text-center mb-8 text-amber-900">Opciones:</h2>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <a href="listacontenedores.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
                 <img src="image/contenedor con esclavo.jpeg" alt="Contenedores"
                      class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
@@ -216,6 +223,15 @@
                 <h3 class="text-xl font-semibold">Mapa</h3>
                 <p class="text-gray-600">Consultá el mapa de contenedores y rutas.</p>
                 <p class="text-amber-800 font-bold mt-2 text-2xl">🗺️</p>
+            </a>
+
+            <a href="listarincidencias.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
+                <div class="rounded-xl w-full h-40 sm:h-48 mb-3 bg-amber-100 flex items-center justify-center text-6xl">
+                    ⚠️
+                </div>
+                <h3 class="text-xl font-semibold">Incidencias</h3>
+                <p class="text-gray-600">Reportá y seguí el estado de incidencias.</p>
+                <p class="text-amber-800 font-bold mt-2 text-2xl">📋</p>
             </a>
         </div>
     </section>

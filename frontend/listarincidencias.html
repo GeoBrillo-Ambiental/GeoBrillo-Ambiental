@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incidencias</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <h1 class="text-2xl sm:text-3xl font-bold text-green-700">Incidencias ⚠️</h1>
+            <a href="incidencias.html" class="bg-green-700 hover:bg-green-800 text-white font-medium px-5 py-2.5 rounded-lg transition">
+                + Reportar Incidencia
+            </a>
+        </div>
+
+        <!-- ============== INFORME SIMPLE ============== -->
+        <div class="grid grid-cols-2 gap-4 max-w-md">
+            <div class="bg-white shadow-xl rounded-2xl p-4 text-center">
+                <p class="text-sm text-gray-500">Abiertas</p>
+                <p id="contAbiertas" class="text-3xl font-bold text-amber-600">-</p>
+            </div>
+            <div class="bg-white shadow-xl rounded-2xl p-4 text-center">
+                <p class="text-sm text-gray-500">Resueltas</p>
+                <p id="contResueltas" class="text-3xl font-bold text-green-700">-</p>
+            </div>
+        </div>
+
+        <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
+            <div class="overflow-x-auto">
+                <table class="min-w-full text-sm text-left">
+                    <thead>
+                        <tr class="bg-green-700 text-white">
+                            <th class="px-4 py-3 border whitespace-nowrap">ID</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Estado</th>
+                            <th class="px-4 py-3 border">Descripción</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Contenedor</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Reportado por</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Fecha reportada</th>
+                            <th class="px-4 py-3 border whitespace-nowrap">Fecha resuelta</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thCuadrilla">Cuadrilla</th>
+                            <th class="px-4 py-3 border whitespace-nowrap" id="thAcciones">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaIncidencias" class="text-center bg-white divide-y divide-gray-200">
+                        <tr><td colspan="9" class="py-4 text-gray-500">Cargando incidencias...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de gestión: asignar cuadrilla / cambiar estado -->
+    <div id="modalGestion" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+            <h3 class="text-xl font-bold text-green-700">Gestionar Incidencia</h3>
+            <form id="formGestion" class="space-y-4">
+                <input type="hidden" name="id" id="gestId">
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Descripción</label>
+                    <textarea name="descripcion" id="gestDescripcion" required rows="3" maxlength="120" class="w-full border border-gray-300 rounded-lg p-3"></textarea>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
+                    <select name="estado" id="gestEstado" required class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="Reportada">Reportada</option>
+                        <option value="En proceso">En proceso</option>
+                        <option value="Resuelta">Resuelta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block mb-1 text-sm font-medium text-gray-700">Cuadrilla asignada</label>
+                    <select name="id_cuadrilla" id="gestCuadrilla" class="w-full border border-gray-300 rounded-lg p-3">
+                        <option value="">Sin asignar</option>
+                    </select>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">Guardar Cambios</button>
+                    <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let esGestion = false;
+        let cuadrillasCache = [];
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const usuario = await protegerVistaConSesion();
+            esGestion = puedeGestionar(usuario);
+
+            document.getElementById('thCuadrilla').classList.toggle('hidden', !esGestion);
+            document.getElementById('thAcciones').classList.toggle('hidden', !esGestion);
+
+            if (esGestion) {
+                cargarCuadrillas();
+            }
+            listar();
+        });
+
+        function cargarCuadrillas() {
+            fetch(`${API_GESTION}/incidenciaapi.php?accion=listarCuadrillas&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    cuadrillasCache = data.data || [];
+                    const select = document.getElementById("gestCuadrilla");
+                    select.innerHTML = `<option value="">Sin asignar</option>` + cuadrillasCache.map(c =>
+                        `<option value="${c.Id_Cuadrilla}">Cuadrilla #${c.Id_Cuadrilla} (${c.Dia} ${c.Horario})</option>`
+                    ).join("");
+                })
+                .catch(err => console.error("❌ Error al traer cuadrillas:", err));
+        }
+
+        function listar() {
+            fetch(`${API_GESTION}/incidenciaapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+                .then(res => res.json())
+                .then(data => {
+                    const tabla = document.getElementById("tablaIncidencias");
+                    tabla.innerHTML = "";
+                    const incidencias = data.data || [];
+                    const colspan = esGestion ? 9 : 7;
+
+                    const abiertas = incidencias.filter(i => i.EstadoInc !== 'Resuelta').length;
+                    const resueltas = incidencias.filter(i => i.EstadoInc === 'Resuelta').length;
+                    document.getElementById("contAbiertas").textContent = abiertas;
+                    document.getElementById("contResueltas").textContent = resueltas;
+
+                    if (incidencias.length === 0) {
+                        tabla.innerHTML = `<tr><td colspan="${colspan}" class="py-4 text-gray-500">No hay incidencias registradas.</td></tr>`;
+                        return;
+                    }
+
+                    incidencias.forEach(i => {
+                        const cuadrillaHtml = esGestion
+                            ? `<td class="border px-4 py-2">${i.Id_Cuadrilla ?? 'Sin asignar'}</td>`
+                            : '';
+                        const accionesHtml = esGestion ? `
+                                <td class="border px-4 py-2 space-x-1">
+                                    <button onclick='abrirModal(${JSON.stringify(i)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                        Gestionar
+                                    </button>
+                                    <button onclick="eliminar(${i.Id_Incidencia})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
+                                        Eliminar
+                                    </button>
+                                </td>` : '';
+                        const badgeColor = i.EstadoInc === 'Resuelta' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
+                        tabla.innerHTML += `
+                            <tr class="hover:bg-green-50">
+                                <td class="border px-4 py-2">${i.Id_Incidencia ?? '-'}</td>
+                                <td class="border px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-semibold ${badgeColor}">${i.EstadoInc ?? '-'}</span></td>
+                                <td class="border px-4 py-2 text-left">${i.Descripcion ?? '-'}</td>
+                                <td class="border px-4 py-2">#${i.Id_Contenedor ?? '-'}</td>
+                                <td class="border px-4 py-2">${i.ReportadoPor ?? '-'}</td>
+                                <td class="border px-4 py-2">${i.FchaReportado ?? '-'}</td>
+                                <td class="border px-4 py-2">${i.FchaResuelto ?? '-'}</td>
+                                ${cuadrillaHtml}
+                                ${accionesHtml}
+                            </tr>`;
+                    });
+                })
+                .catch(err => {
+                    document.getElementById("tablaIncidencias").innerHTML = `<tr><td colspan="9" class="py-4 text-red-600 font-bold">Error al cargar las incidencias.</td></tr>`;
+                    console.error("❌ Error al traer incidenciaapi.php:", err);
+                });
+        }
+
+        function abrirModal(i) {
+            document.getElementById("gestId").value = i.Id_Incidencia;
+            document.getElementById("gestDescripcion").value = i.Descripcion ?? '';
+            document.getElementById("gestEstado").value = i.EstadoInc ?? 'Reportada';
+            document.getElementById("gestCuadrilla").value = i.Id_Cuadrilla ?? '';
+            document.getElementById("modalGestion").classList.remove("hidden");
+        }
+
+        function cerrarModal() {
+            document.getElementById("modalGestion").classList.add("hidden");
+        }
+
+        document.getElementById("formGestion").addEventListener("submit", function (e) {
+            e.preventDefault();
+            const datos = new FormData(this);
+            datos.append("accion", "actualizar");
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/incidenciaapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exito) {
+                        cerrarModal();
+                        listar();
+                    } else {
+                        alert("Error: " + data.mensaje);
+                    }
+                })
+                .catch(err => alert("Error al actualizar: " + err.message));
+        });
+
+        function eliminar(id) {
+            if (!confirm("¿Estás segura de que deseas eliminar esta incidencia?")) return;
+            const datos = new FormData();
+            datos.append("accion", "eliminar");
+            datos.append("id", id);
+            datos.append("token", getToken());
+
+            fetch(`${API_GESTION}/incidenciaapi.php`, { method: "POST", body: datos })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exito) {
+                        listar();
+                    } else {
+                        alert("Error: " + data.mensaje);
+                    }
+                })
+                .catch(err => alert("Error al eliminar: " + err.message));
+        }
+    </script>
+
+</body>
+</html>

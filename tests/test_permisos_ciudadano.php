@@ -131,3 +131,41 @@ if (strpos($statusListarCiud, '200') !== false && !empty($respListarCiud['exito'
 } else {
     echo "❌ Ciudadano debería poder listar contenedores (solo lectura). Status: $statusListarCiud\n";
 }
+
+// --- Paso 7: el Ciudadano SÍ puede REPORTAR una incidencia (regla
+//     especial: "los ciudadanos reportan, gestión asigna cuadrilla") ---
+list($respReportar, $statusReportar) = post_form("$API_GESTION/incidenciaapi.php", [
+    "accion" => "reportar", "token" => $tokenCiudadano,
+    "descripcion" => "Contenedor de prueba desbordado (test automático)",
+    "id_contenedor" => 1, "estado_reportado" => "Desbordado",
+]);
+if (strpos($statusReportar, '200') !== false && !empty($respReportar['exito'])) {
+    echo "✅ Ciudadano SÍ puede reportar una incidencia (200 OK) - correcto\n";
+} else {
+    echo "❌ Ciudadano debería poder reportar una incidencia. Status: $statusReportar / " . json_encode($respReportar) . "\n";
+}
+
+// --- Paso 7b: el reporte tiene que haber cambiado el estado del
+//     contenedor #1 a "Desbordado" ---
+list($respContenedores) = get("$API_GESTION/contenedorapi.php?accion=listar&token=$tokenCiudadano");
+$contenedor1 = null;
+foreach (($respContenedores['data'] ?? []) as $c) {
+    if ((int)$c['Id_Contenedor'] === 1) { $contenedor1 = $c; break; }
+}
+if ($contenedor1 && $contenedor1['EstadoCont'] === 'Desbordado') {
+    echo "✅ El contenedor #1 pasó a estado \"Desbordado\" tras el reporte - correcto\n";
+} else {
+    echo "❌ El contenedor #1 debería figurar como \"Desbordado\". Estado actual: " . ($contenedor1['EstadoCont'] ?? 'no encontrado') . "\n";
+}
+
+// --- Paso 8: el Ciudadano NO puede asignar cuadrilla / cerrar una
+//     incidencia (eso es tarea de gestión) ---
+list(, $statusActualizarInc) = post_form("$API_GESTION/incidenciaapi.php", [
+    "accion" => "actualizar", "token" => $tokenCiudadano,
+    "id" => 1, "estado" => "Resuelta", "descripcion" => "intento no autorizado",
+]);
+if (strpos($statusActualizarInc, '403') !== false) {
+    echo "✅ Ciudadano NO puede gestionar (asignar cuadrilla/cerrar) una incidencia (403 Forbidden) - correcto\n";
+} else {
+    echo "❌ Ciudadano pudo gestionar una incidencia (debería estar prohibido). Status: $statusActualizarInc\n";
+}

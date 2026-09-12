@@ -89,6 +89,7 @@ propio Home arma el menú dinámicamente según el rol devuelto por
 | `contenedorapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Contenedor |
 | `centroapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Centro de Acopio/Vertedero |
 | `maquinariaapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Maquinaria básica |
+| `incidenciaapi.php` | GET/POST | `listar`, `reportar`: Login (cualquier rol, incluido Ciudadano) · `actualizar` (asignar cuadrilla/cerrar), `eliminar`: Login + rol ≠ Ciudadano | Registro y seguimiento de Incidencias |
 
 Todos los endpoints de gestión aceptan `?accion=listar|insertar|actualizar|eliminar`
 y devuelven siempre `{"exito": true/false, "mensaje": "...", "data": [...]}`.
