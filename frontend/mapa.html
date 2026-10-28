@@ -8,58 +8,101 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-50 text-gray-800 min-h-screen">
 
     <nav class="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
-        <a href="index.html" class="flex items-center gap-2 font-bold text-lg text-green-700">
-            ← GeoBrillo
-        </a>
-        <h1 class="text-xl font-bold text-green-700">🗺️ Mapa de Contenedores y Rutas</h1>
+        <a href="index.html" class="flex items-center gap-2 font-bold text-lg text-green-700">← GeoBrillo</a>
+        <h1 class="text-xl font-bold text-green-700">🗺️ Mapa de Contenedores e Incidencias</h1>
         <span></span>
     </nav>
 
     <div class="max-w-6xl mx-auto p-4 sm:p-6 space-y-4">
         <p class="text-gray-600">
-            Ubicación de referencia de los centros de acopio, vertederos y zonas de recolección de
-            GeoBrillo Ambiental en Montevideo. Hacé clic en el mapa para ver las coordenadas de
-            cualquier punto.
+            Estado actual de los contenedores, incidencias abiertas y centros de acopio de Montevideo.
+            Hacé clic en un punto vacío del mapa para ver sus coordenadas.
         </p>
 
+        <div class="flex flex-wrap gap-4 text-sm bg-white rounded-xl border border-gray-200 p-3">
+            <span><span class="inline-block w-3 h-3 rounded-full" style="background:#16a34a"></span> Contenedor funcional</span>
+            <span><span class="inline-block w-3 h-3 rounded-full" style="background:#dc2626"></span> Desbordado</span>
+            <span><span class="inline-block w-3 h-3 rounded-full" style="background:#f59e0b"></span> Roto</span>
+            <span><span class="inline-block w-3 h-3 rounded-full border-2" style="border-color:#7c3aed"></span> Incidencia abierta</span>
+            <span>━ Ruta de recolección (une sus contenedores)</span>
+            <span>🏭 Centro de acopio / vertedero</span>
+            <span id="resumen" class="ml-auto text-gray-500"></span>
+        </div>
+
         <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200">
-            <div id="mapa" class="w-full" style="height: 500px;"></div>
+            <div id="mapa" class="w-full" style="height: 520px;"></div>
         </div>
     </div>
 
+    <script src="js/auth.js"></script>
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script>
-        // Mapa centrado en Montevideo, Uruguay
         var mapa = L.map('mapa').setView([-34.9011, -56.1645], 12);
-
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> colaboradores'
         }).addTo(mapa);
 
-        // Puntos de referencia de los centros de acopio/vertedero (seed de la base de datos)
-        var centros = [
-            { nombre: "Planta Felipe Cardoso (Vertedero)", lat: -34.8747, lon: -56.1010 },
-            { nombre: "Centro de Acopio Buceo", lat: -34.9083, lon: -56.1358 }
-        ];
+        const COLORES = { 'Funcional': '#16a34a', 'Desbordado': '#dc2626', 'Roto': '#f59e0b', 'Repuesto': '#6b7280' };
 
-        centros.forEach(function (c) {
-            L.marker([c.lat, c.lon]).addTo(mapa).bindPopup(c.nombre);
-        });
+        fetch(`${API_GESTION}/mapaapi.php?accion=datos`)
+            .then(r => r.json())
+            .then(resp => {
+                const d = resp.data || {};
+                const cont = d.contenedores || [], inc = d.incidencias || [], cen = d.centros || [];
+
+                const PALETA = ['#2563eb', '#db2777', '#0d9488', '#ea580c', '#7c3aed', '#65a30d'];
+                const porRuta = {};
+                cont.filter(c => c.Id_Ruta).forEach(c => { (porRuta[c.Id_Ruta] = porRuta[c.Id_Ruta] || []).push(c); });
+                Object.entries(porRuta).forEach(([idRuta, lista], k) => {
+                    if (lista.length < 2) return;
+                    L.polyline(lista.map(c => [+c.Latitud, +c.Longitud]), {
+                        color: PALETA[k % PALETA.length], weight: 3, opacity: 0.7, dashArray: '6 6'
+                    }).addTo(mapa).bindPopup(
+                        `<b>Ruta #${esc(idRuta)}</b><br>${esc(lista[0].DiaHora)}<br>Zona: ${esc(lista[0].NomZona)}<br>${lista.length} contenedores`);
+                });
+
+                cont.forEach(c => {
+                    L.circleMarker([+c.Latitud, +c.Longitud], {
+                        radius: 9, color: '#fff', weight: 2, fillOpacity: 0.95,
+                        fillColor: COLORES[c.EstadoCont] || '#6b7280'
+                    }).addTo(mapa).bindPopup(
+                        `<b>Contenedor #${esc(c.Id_Contenedor)}</b><br>${esc(c.Ubicacion)}<br>Ruta #${esc(c.Id_Ruta)} · ${esc(c.NomZona)}<br>` +
+                        `Estado: ${esc(c.EstadoCont)}<br>Residuo: ${esc(c.TipoReciduo)}`);
+                });
+
+                inc.forEach(i => {
+                    L.circleMarker([+i.Latitud, +i.Longitud], {
+                        radius: 15, color: '#7c3aed', weight: 3, fill: false
+                    }).addTo(mapa).bindPopup(
+                        `<b>Incidencia #${esc(i.Id_Incidencia)}</b> (${esc(i.EstadoInc)})<br>` +
+                        `${esc(i.TipoProblema)}: ${esc(i.Descripcion)}`);
+                });
+
+                cen.forEach(c => {
+                    L.marker([+c.Latitud, +c.Longitud]).addTo(mapa).bindPopup(
+                        `🏭 <b>${esc(c.NombreC)}</b><br>${esc(c.TipoCentro)}<br>${esc(c.DireccionC)}`);
+                });
+
+                document.getElementById('resumen').textContent =
+                    `${cont.length} contenedores · ${inc.length} incidencias abiertas · ${cen.length} centros` +
+                    (d.sin_ubicacion > 0 ? ` · ${d.sin_ubicacion} contenedor(es) sin coordenadas, no se pueden dibujar` : '');
+            })
+            .catch(() => {
+                document.getElementById('resumen').textContent = 'No se pudieron cargar los datos del mapa.';
+            });
 
         mapa.on('click', function (e) {
-            var lat = e.latlng.lat.toFixed(5);
-            var lon = e.latlng.lng.toFixed(5);
-            L.popup()
-                .setLatLng(e.latlng)
-                .setContent(`Coordenadas seleccionadas:<br>${lat}, ${lon}`)
+            L.popup().setLatLng(e.latlng)
+                .setContent(`Coordenadas:<br>${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`)
                 .openOn(mapa);
         });
     </script>
-
 </body>
 </html>
+

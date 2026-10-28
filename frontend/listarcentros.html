@@ -6,13 +6,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Listado de Centros y Maquinaria</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-6 md:p-10">
 
     <div class="max-w-6xl mx-auto space-y-8">
 
-        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
 
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h1 class="text-2xl sm:text-4xl font-bold text-green-700">
@@ -23,7 +25,6 @@
             </a>
         </div>
 
-        <!-- ============== CENTROS ============== -->
         <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Centros de Acopio / Vertedero</h2>
             <div class="overflow-x-auto">
@@ -46,7 +47,6 @@
             </div>
         </div>
 
-        <!-- ============== MAQUINARIA ============== -->
         <div class="bg-white shadow-2xl rounded-2xl p-4 sm:p-8">
             <h2 class="text-xl font-bold mb-4 text-gray-800">Maquinaria básica</h2>
             <div class="overflow-x-auto">
@@ -70,9 +70,8 @@
 
     </div>
 
-    <!-- Modal de edición de Centro -->
     <div id="modalEditarCentro" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
+        <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 class="text-xl font-bold text-green-700">Editar Centro</h3>
             <form id="formEditarCentro" class="space-y-4">
                 <input type="hidden" name="id" id="editCentroId">
@@ -99,6 +98,20 @@
                     <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad Actual</label>
                     <input type="number" name="cap_actual" id="editCentroCapActual" required class="w-full border border-gray-300 rounded-lg p-3">
                 </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Latitud (opcional)</label>
+                        <input type="number" step="any" name="latitud" id="editCentroLat" class="w-full border border-gray-300 rounded-lg p-3" placeholder="-34.9011">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Longitud (opcional)</label>
+                        <input type="number" step="any" name="longitud" id="editCentroLng" class="w-full border border-gray-300 rounded-lg p-3" placeholder="-56.1645">
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">📍 O hacé clic en el mapa para elegir la ubicación:</p>
+                    <div id="selectorMapa" class="w-full rounded-lg border border-gray-300" style="height: 260px;"></div>
+                </div>
                 <div class="flex gap-3 pt-2">
                     <button type="submit" class="flex-1 bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">Guardar Cambios</button>
                     <button type="button" onclick="cerrarModalCentro()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 transition">Cancelar</button>
@@ -107,7 +120,6 @@
         </div>
     </div>
 
-    <!-- Modal de edición de Maquinaria -->
     <div id="modalEditarMaquinaria" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
             <h3 class="text-xl font-bold text-green-700">Editar Maquinaria</h3>
@@ -142,7 +154,10 @@
     </div>
 
     <script src="js/auth.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="js/selector-mapa.js"></script>
     <script>
+        const selectorMapa = montarSelectorMapa('selectorMapa', document.getElementById('editCentroLat'), document.getElementById('editCentroLng'));
         let esGestion = false;
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -173,7 +188,7 @@
                     centros.forEach(c => {
                         const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-2 space-x-1">
-                                    <button onclick='abrirModalCentro(${JSON.stringify(c)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                    <button onclick="abrirModalCentro(${attr(c)})" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
                                     </button>
                                     <button onclick="eliminarCentro(${c.Id_Centro})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
@@ -182,12 +197,12 @@
                                 </td>` : '';
                         tabla.innerHTML += `
                             <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-2">${c.Id_Centro ?? '-'}</td>
-                                <td class="border px-4 py-2">${c.NombreC ?? '-'}</td>
-                                <td class="border px-4 py-2">${c.DireccionC ?? '-'}</td>
-                                <td class="border px-4 py-2">${c.TipoCentro ?? '-'}</td>
-                                <td class="border px-4 py-2">${c.CapTotal ?? '-'}</td>
-                                <td class="border px-4 py-2">${c.CapActual ?? '-'}</td>
+                                <td class="border px-4 py-2">${esc(c.Id_Centro, '-')}</td>
+                                <td class="border px-4 py-2">${esc(c.NombreC, '-')}</td>
+                                <td class="border px-4 py-2">${esc(c.DireccionC, '-')}</td>
+                                <td class="border px-4 py-2">${esc(c.TipoCentro, '-')}</td>
+                                <td class="border px-4 py-2">${esc(c.CapTotal, '-')}</td>
+                                <td class="border px-4 py-2">${esc(c.CapActual, '-')}</td>
                                 ${accionesHtml}
                             </tr>`;
                     });
@@ -205,7 +220,10 @@
             document.getElementById("editCentroTipo").value = c.TipoCentro || 'Vertedero';
             document.getElementById("editCentroCapTotal").value = c.CapTotal || '';
             document.getElementById("editCentroCapActual").value = c.CapActual || '';
+            document.getElementById("editCentroLat").value = c.Latitud || '';
+            document.getElementById("editCentroLng").value = c.Longitud || '';
             document.getElementById("modalEditarCentro").classList.remove("hidden");
+            setTimeout(() => selectorMapa.refrescar(), 50);
         }
 
         function cerrarModalCentro() {
@@ -243,7 +261,7 @@
                     maquinaria.forEach(m => {
                         const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-2 space-x-1">
-                                    <button onclick='abrirModalMaquinaria(${JSON.stringify(m)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                    <button onclick="abrirModalMaquinaria(${attr(m)})" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
                                     </button>
                                     <button onclick="eliminarMaquinaria(${m.Id_Maquinaria})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
@@ -252,10 +270,10 @@
                                 </td>` : '';
                         tabla.innerHTML += `
                             <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-2">${m.Id_Maquinaria ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.NombreMaq ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.TipoMaq ?? '-'}</td>
-                                <td class="border px-4 py-2">${m.EstadoMaq ?? '-'}</td>
+                                <td class="border px-4 py-2">${esc(m.Id_Maquinaria, '-')}</td>
+                                <td class="border px-4 py-2">${esc(m.NombreMaq, '-')}</td>
+                                <td class="border px-4 py-2">${esc(m.TipoMaq, '-')}</td>
+                                <td class="border px-4 py-2">${esc(m.EstadoMaq, '-')}</td>
                                 <td class="border px-4 py-2">${m.NombreC ?? m.Id_Centro ?? '-'}</td>
                                 ${accionesHtml}
                             </tr>`;
@@ -324,3 +342,4 @@
 
 </body>
 </html>
+

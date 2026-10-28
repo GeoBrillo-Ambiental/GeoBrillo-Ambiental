@@ -1,12 +1,11 @@
 <?php
-/**
- * Corre todos los tests unitarios del proyecto.
- * Ejecutar:  php tests/unit/run_all.php
- */
 
 $tests = [
     __DIR__ . '/UsuarioControladorTest.php',
     __DIR__ . '/CamionControladorTest.php',
+    __DIR__ . '/IncidenciaControladorTest.php',
+    __DIR__ . '/RecoleccionControladoresTest.php',
+    __DIR__ . '/GestionControladoresTest.php',
 ];
 
 $falloAlguno = false;

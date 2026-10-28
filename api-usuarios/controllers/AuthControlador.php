@@ -26,6 +26,14 @@ class AuthControlador {
             return ["exito" => false, "mensaje" => "Correo o contraseña incorrectos."];
         }
 
+        $estado = $usuario['Estado'] ?? 'Activo';
+        if ($estado === 'Pendiente') {
+            return ["exito" => false, "mensaje" => "Tu solicitud de registro todavía no fue aprobada por un administrador."];
+        }
+        if ($estado !== 'Activo') {
+            return ["exito" => false, "mensaje" => "Tu solicitud de registro fue rechazada."];
+        }
+
         $token = $this->modeloSesion->crear($usuario['Id_Usuario']);
         $rol = $this->modeloUsuario->listarRoles();
         $nombreRol = '';
@@ -60,7 +68,6 @@ class AuthControlador {
         return ["exito" => true, "mensaje" => "Sesión cerrada."];
     }
 
-    /** Devuelve los datos del usuario dueño de un token, si es válido. */
     public function quienSoy($token) {
         $usuario = $this->modeloSesion->validar($token);
 

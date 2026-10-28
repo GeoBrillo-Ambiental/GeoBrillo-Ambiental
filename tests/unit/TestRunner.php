@@ -1,11 +1,5 @@
 <?php
-/**
- * TestRunner: un mini framework de aserciones, para no depender de
- * instalar PHPUnit/composer. Cada archivo de test crea un TestRunner,
- * llama a assertTrue/assertFalse/assertEquals y al final llama a
- * resumen(), que imprime cuántos casos pasaron y termina con código
- * de salida distinto de 0 si algo falló (útil para CI).
- */
+
 class TestRunner {
     private $nombreSuite;
     private $total = 0;

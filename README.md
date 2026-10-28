@@ -1,189 +1,124 @@
-# GeoBrillo Ambiental — 2da Entrega (Programación Full Stack)
+# GeoBrillo Ambiental — Programación Full Stack (3ra entrega)
 
-Sistema de gestión de residuos urbanos, reestructurado como **3
-aplicaciones independientes** (arquitectura de microservicios), tal
-como exige la guía oficial de Docker de la cátedra:
+Sistema de gestión de residuos urbanos de Montevideo, con arquitectura de microservicios. Cada aplicación es una base de código independiente:
 
 ```
-geobrillo/
-├── docker-compose.yml          Orquestador general
-├── README.md                   Este archivo
-├── database/
-│   └── schema.sql               Script completo de la base de datos
-├── frontend/                    Landing Page + app de usuarios (HTML+CSS+JS puro, Nginx)
-├── api-usuarios/                API REST: autenticación, registro, CRUD de Usuario (PHP+Apache)
-├── api-gestion/                 API REST: CRUD de Camión, Contenedor, Centro y Maquinaria (PHP+Apache)
-└── tests/                       Tests unitarios y de integración
+geobrillo/                      Aplicaciones (corren en contenedores Docker)
+├── docker-compose.yml
+├── .env.example                Datos de conexión a la base de datos
+├── frontend/                   Landing page y aplicación de usuarios (HTML + CSS + JS, Nginx)
+├── api-usuarios/               API REST: registro con aprobación, login, usuarios y roles
+├── api-gestion/                API REST: contenedores, centros, maquinaria, incidencias, alertas, estadísticas, mapa, contacto
+├── api-recoleccion/            API REST: camiones, cuadrillas, rutas y recolecciones
+└── tests/                      Tests unitarios y de integración
+
+geobrillo-bd/                   Base de datos MySQL 8 (se instala en el servidor de base de datos)
+├── schema.sql                  DDL + datos de prueba
+├── setup_servidor.sql          Usuario de las APIs
+└── docker-compose.yml          Servidor MySQL de pruebas (opcional)
 ```
 
-El **frontend nunca accede a la base de datos**: todo pasa por las
-APIs vía `fetch`/AJAX, devolviendo JSON. Esta separación permite que
-el tribunal levante todo el sistema con un solo comando de Docker, sin
-instalar PHP ni MySQL localmente.
+Cada API sigue MVC (modelos, controladores y endpoints), usa PHP 8 con PDO y consultas preparadas, y responde JSON. El frontend nunca accede a la base de datos: solo consume las APIs con `fetch`.
 
-## 🔐 Autenticación y roles (regla central del proyecto)
+## Despliegue
 
-El login se hace por **token** (no por cookies de sesión), porque cada
-microservicio corre en un puerto distinto:
+La letra (sección 8) pide MySQL 8 en el servidor de base de datos y cada aplicación en contenedores Docker. Por eso la base **no** forma parte del `docker-compose.yml` de las aplicaciones:
 
-1. El usuario inicia sesión en `login.html` → `api-usuarios/login.php`.
-2. Si las credenciales son correctas, la API genera un token random,
-   lo guarda en la tabla `Sesion` y lo devuelve en el JSON.
-3. El frontend guarda el token en `localStorage` y lo reenvía en cada
-   petición a `api-usuarios` o `api-gestion` (como parámetro `token`).
-4. Cada endpoint protegido valida el token contra la tabla `Sesion`
-   (que ambas APIs comparten porque usan la misma base de datos).
+```
+Servidor de aplicaciones (Docker)                    Servidor de base de datos
+┌──────────────────────────────────┐                ┌──────────────────────┐
+│ frontend         :8080           │                │  MySQL 8             │
+│ api-usuarios     :8081  ──PDO────┼──── 3306 ─────►│  base "geobrillo"    │
+│ api-gestion      :8082           │                │                      │
+│ api-recoleccion  :8083           │                └──────────────────────┘
+└──────────────────────────────────┘
+```
 
-**Regla de negocio obligatoria:** un usuario con rol **Ciudadano**
-puede iniciar sesión, pero **no tiene acceso de gestión a ningún CRUD**
-(no puede insertar, editar ni eliminar Usuarios, Camiones,
-Contenedores ni Centros/Maquinaria). Sus permisos son:
-- Ver el **Mapa** (`mapa.html`, público, sin necesidad de sesión).
-- Ver en **modo solo lectura** los listados de Contenedores, Camiones
-  y Centros de Acopio/Maquinaria (accesibles desde las tarjetas de
-  "Opciones" del Home) — puede consultarlos, pero no ve los botones
-  de Agregar/Editar/Eliminar.
-- **Registrarse** e **iniciar sesión**.
-- Ver la información de la empresa/software (sección "Quiénes somos"
-  del home).
-- Usar el **formulario de contacto**.
+1. **Base de datos** (ver `geobrillo-bd/README.md`):
+   ```bash
+   mysql -u root -p < setup_servidor.sql
+   mysql -u root -p < schema.sql
+   ```
+2. **Aplicaciones**:
+   ```bash
+   cp .env.example .env      # completar DB_HOST, DB_USER y DB_PASS
+   docker compose up --build -d
+   docker compose ps
+   ```
 
-El listado de **Usuarios** es la única excepción: sigue totalmente
-restringido a roles de gestión, ya que expone datos de otras cuentas.
+Para probar sin el servidor de la Escuela: `docker compose up -d` dentro de `geobrillo-bd/` levanta un MySQL de pruebas, y en `.env` se usa `DB_HOST=host.docker.internal`.
 
-Cualquier otro rol (Chofer, Operador, Cuadrilla, Administrador) sí
-puede gestionar (insertar/editar/eliminar) los 4 CRUD. Esta regla está
-aplicada **dos veces**:
+Servicios: frontend http://localhost:8080 · api-usuarios :8081 · api-gestion :8082 · api-recoleccion :8083.
 
-- **Del lado del cliente** (`frontend/js/auth.js`): oculta las
-  opciones de gestión del menú y redirige si alguien entra a mano a
-  una URL de gestión sin permisos. Es solo una mejora de experiencia.
-- **Del lado del servidor** (`middleware/Auth.php` en ambas APIs):
-  esta es la protección real y obligatoria. Cualquier intento de
-  llamar a un endpoint de gestión sin sesión responde `401
-  Unauthorized`, y si la sesión es de un Ciudadano responde `403
-  Forbidden` — sin importar lo que haga el frontend.
+Usuarios de prueba (clave `1234`): `admin@eco.com` (Administrador), `ciudadano@eco.com` (Ciudadano), `chofer@eco.com` (Chofer).
 
-Después de iniciar sesión (con cualquier rol), **siempre se vuelve al
-Home (`index.html`)**, nunca directo a una pantalla de gestión. El
-propio Home arma el menú dinámicamente según el rol devuelto por
-`api-usuarios/sesion.php`.
+## Roles y seguridad
 
-## 🔌 Endpoints (APIs)
+- Login por **token**: `api-usuarios/login.php` lo genera y lo guarda en la tabla `Sesion`; el frontend lo envía en cada petición y cada API lo valida contra esa tabla.
+- **Registro con aprobación**: el registro público como **Ciudadano** queda activo al instante; los roles de personal (Chofer, Operador, Cuadrilla) quedan `Pendiente` hasta que un **Administrador** los apruebe o rechace (en Usuarios). El registro público nunca permite el rol Administrador.
+- **Ciudadano**: ve el mapa, consulta en solo lectura contenedores, camiones y centros, y reporta incidencias. No puede insertar, editar ni eliminar en ningún CRUD (la API responde `403`).
+- **Chofer, Operador, Cuadrilla**: gestionan los CRUD, incidencias, rutas, panel e informes.
+- **Administrador**: además crea, edita y elimina cuentas Administrador y resuelve solicitudes de registro.
+- Sin token la API responde `401`. El frontend solo oculta opciones: la protección real está en el servidor.
 
-### `api-usuarios` (puerto 8081 con Docker)
+## Endpoints
 
-| Endpoint | Método | Protección | Función |
-|---|---|---|---|
-| `login.php` | POST (JSON) | Público | Devuelve un token si las credenciales son válidas |
-| `logout.php` | POST | Público | Invalida un token |
-| `sesion.php` | GET | Público (requiere token) | "Quién soy": usado por el frontend para armar el menú |
-| `registro.php` | POST | Público | Alta de usuario (cualquier rol, incluido Ciudadano) |
-| `usuarioapi.php` | GET/POST | **Login + rol ≠ Ciudadano** | `listar`, `insertar`, `actualizar`, `eliminar` |
+### api-usuarios
 
-### `api-gestion` (puerto 8082 con Docker)
+| Endpoint | Protección | Función |
+|---|---|---|
+| `login.php` | Público | Devuelve un token (solo usuarios `Activo`) |
+| `logout.php`, `sesion.php` | Token | Cerrar sesión / datos de quién soy |
+| `registro.php` | Público | Registro público (Ciudadano activo; personal `Pendiente`) |
+| `usuarioapi.php` | Gestión | `listar`, `insertar`, `actualizar`, `eliminar` · `aprobar` y `rechazar` solo Administrador |
 
-| Endpoint | Método | Protección | Función |
-|---|---|---|---|
-| `camionapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Camión |
-| `contenedorapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Contenedor |
-| `centroapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Centro de Acopio/Vertedero |
-| `maquinariaapi.php` | GET/POST | `listar`: Login (cualquier rol) · `insertar/actualizar/eliminar`: Login + rol ≠ Ciudadano | CRUD de Maquinaria básica |
-| `incidenciaapi.php` | GET/POST | `listar`, `reportar`: Login (cualquier rol, incluido Ciudadano) · `actualizar` (asignar cuadrilla/cerrar), `eliminar`: Login + rol ≠ Ciudadano | Registro y seguimiento de Incidencias |
+### api-gestion
 
-Todos los endpoints de gestión aceptan `?accion=listar|insertar|actualizar|eliminar`
-y devuelven siempre `{"exito": true/false, "mensaje": "...", "data": [...]}`.
+| Endpoint | Protección | Función |
+|---|---|---|
+| `contenedorapi.php`, `centroapi.php`, `maquinariaapi.php` | `listar`: login · resto: gestión | CRUD (los contenedores y centros llevan coordenadas) |
+| `incidenciaapi.php` | `reportar` y `listar`: login · resto: gestión | Reportar, asignar cuadrilla y cerrar |
+| `notificacionapi.php` | Gestión | Alertas (`listar`, `marcarLeida`, `marcarTodas`) |
+| `estadisticaapi.php` | Gestión | `panel` e `informe&tipo=abiertas\|cerradas` |
+| `contactoapi.php` | `enviar`: público · resto: gestión | Formulario de contacto |
+| `mapaapi.php` | Público | Contenedores, incidencias abiertas, centros y rutas |
 
-## 🐳 Puesta en marcha con Docker
+### api-recoleccion
 
-Requisito: tener Docker Desktop (o Docker Engine + Compose) instalado.
+| Endpoint | Protección | Función |
+|---|---|---|
+| `camionapi.php`, `cuadrillaapi.php`, `recoleccionapi.php` | `listar`: login · resto: gestión | CRUD |
+| `rutaapi.php` | `listar`: login · resto: gestión | CRUD + `asignarContenedores` (arma la ruta eligiendo contenedores y orden) |
+
+Todas aceptan `?accion=...` y responden `{"exito": true/false, "mensaje": "...", "data": [...]}`.
+
+## Funcionalidades (letra, 9.4)
+
+- **API de recolección** en un servicio propio.
+- **Incidencias** (estados Abierta / En curso / Resuelta): el ciudadano reporta; el contenedor pasa a Roto o Desbordado; gestión asigna cuadrilla y cierra, y el contenedor vuelve a Funcional.
+- **Mapa interactivo** con contenedores por estado, incidencias abiertas, centros de acopio y rutas. La ubicación se elige con un clic en el mapa al crear o editar.
+- **Editor de rutas**: se eligen a mano los contenedores de cada ruta, en orden, sobre el mapa.
+- **Informes**: incidencias abiertas y cerradas, con exportación a CSV e impresión.
+- **Panel de control**: top de contenedores desbordados del mes, zonas críticas, tiempo medio de resolución, frecuencia de recolección, kg por zona, estado de contenedores y contenedores de repuesto (inventario).
+- **Alertas** por cada incidencia o mensaje de contacto.
+- **Formulario de contacto** funcional, guardado en la base.
+
+## Base de datos
+
+`geobrillo-bd/schema.sql` respeta el modelo de la cátedra. Los agregados están justificados en su encabezado: autoincrementales, `Password` de 255, tablas `Sesion`, `Maquinaria`, `Notificacion`, `Recoleccion` y `Contacto`, coordenadas en contenedores y centros, `Incidencia.TipoProblema`, `Contenedor.OrdenRuta` y `Usuario.Estado`.
+
+Para ver la base: `mysql -h <DB_HOST> -u <usuario> -p geobrillo`, o Adminer (`docker compose --profile herramientas up -d adminer`, http://localhost:8084).
+
+## Tests
+
+Ver `tests/README.md`.
 
 ```bash
-git clone <repositorio>
-cd geobrillo
-
-# 1. Levantar todo el entorno
-docker compose up --build -d
-
-# 2. Verificar que los contenedores estén corriendo
-docker compose ps
-
-# 3. Crear el usuario Administrador de prueba (una sola vez)
-docker compose exec api-usuarios php database/crear_admin.php
+php tests/unit/run_all.php          # unitarios, no requieren Docker ni base
+php tests/test_entrega3.php         # integración, requieren las APIs levantadas
 ```
-
-Acceso a los servicios:
-- **Frontend:** http://localhost:8080
-- **API Usuarios:** http://localhost:8081
-- **API Gestión:** http://localhost:8082
-- **MySQL:** localhost:3306 (usuario `sigeru_user` / clave `sigeru_password_123`)
-
-Usuario administrador de prueba: `admin@eco.com` / `1234`
-
-Para detener el entorno:
-
-```bash
-docker compose down
-```
-
-## 🧪 Testing
-
-Ver `tests/README.md`. Resumen:
-
-```bash
-# Unitarios (no requieren Docker corriendo)
-php tests/unit/run_all.php
-
-# De integración (requieren docker compose up)
-php tests/test_login.php
-php tests/test_permisos_ciudadano.php
-```
-
-`test_permisos_ciudadano.php` verifica automáticamente que un
-Ciudadano reciba `403 Forbidden` al intentar gestionar cualquier CRUD.
-
-## 🗄️ Base de datos
-
-`database/schema.sql` contiene el modelo completo entregado por la
-cátedra, con estos agregados justificados (detallados como comentario
-al inicio del propio archivo):
-
-1. `AUTO_INCREMENT` en las claves primarias.
-2. `Usuario.Password` ampliada a `varchar(255)` para contraseñas
-   cifradas con `password_hash()`.
-3. Tabla nueva **`Sesion`**: guarda los tokens de autenticación
-   (necesaria por la arquitectura de microservicios sin cookies).
-4. Tabla nueva **`Maquinaria`**: pedida explícitamente por la consigna
-   de la 2da entrega ("CRUD de centros de acopio y maquinaria
-   básica"), asociada a `CAcopioVertedero`.
-5. Rol **Administrador** agregado al seed de `Rol`.
-
-## ✅ Checklist de la 2da Entrega cubierto
-
-- [x] Registro e inicio de sesión completo (con token).
-- [x] CRUD completo de Usuarios — alta, listado, **edición (modal)** y baja (todos los roles).
-- [x] CRUD completo de Contenedores — alta, listado, **edición (modal)** y baja.
-- [x] CRUD completo de Camiones (flota) — alta, listado, **edición (modal)** y baja.
-- [x] CRUD completo de Centros de Acopio y Maquinaria básica — alta, listado, **edición (modal)** y baja, para ambas entidades.
-- [x] Endpoints para los 4 CRUD mencionados.
-- [x] Persistencia de datos con base de datos real (MySQL + PDO).
-- [x] Seguridad y separación de endpoints por rol (Ciudadano bloqueado).
-- [x] Testing de la API mediante código (unitarios + integración).
-- [x] Archivos para ejecutar todo con Docker (`docker-compose.yml` +
-      3 `Dockerfile`).
-- [x] Datos de prueba cargados en la base (`schema.sql`).
 
 ## Notas
 
-- La carpeta `frontend/image/` quedó vacía: hay que volver a copiar
-  ahí el logo y las fotos usadas en `index.html`, ya que no forman
-  parte de este código fuente.
-- El mapa (`mapa.html`) usa **Leaflet + OpenStreetMap**, siguiendo la
-  guía del curso, y es accesible para cualquier persona (incluido un
-  Ciudadano sin loguearse).
-- `api-recoleccion` (mencionada en el detalle de implementación del
-  proyecto para rutas y logística de flota) queda fuera del alcance
-  de esta 2da entrega: por ahora Camión vive dentro de `api-gestion`,
-  como indica la guía oficial de Docker para este hito (que solo pide
-  `api-usuarios` y `api-gestion`). Puede separarse en una entrega
-  posterior siguiendo el mismo patrón.
+- Imágenes del home en `frontend/image/` (falta `centros.jpg`).
+- Cada carpeta de aplicación puede convertirse en su propio repositorio de la organización de GitHub.

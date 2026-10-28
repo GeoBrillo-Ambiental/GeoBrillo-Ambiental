@@ -20,9 +20,7 @@ try {
     switch ($accion) {
 
         case 'listar':
-            // Cualquier usuario logueado puede VER la lista (incluido
-            // Ciudadano); solo insertar/actualizar/eliminar quedan
-            // reservados a roles de gestión.
+
             Auth::requireLogin($token);
             echo json_encode($controlador->obtenerContenedores());
             break;

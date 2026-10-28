@@ -1,15 +1,3 @@
-/**
- * auth.js — helper compartido por todas las vistas del frontend.
- *
- * El frontend es 100% estático (HTML + CSS + JS, servido por Nginx) y
- * NO accede nunca directamente a la base de datos: todo pasa por las
- * APIs (api-usuarios y api-gestion), tal como pide la arquitectura del
- * proyecto. La autenticación es por TOKEN (no por cookies), porque
- * cada servicio corre en un puerto/origen distinto.
- */
-
-// URLs base de las APIs. Si el frontend se sirve con Docker Compose
-// (ver docker-compose.yml) quedan expuestas en estos puertos.
 const API_USUARIOS = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? `${window.location.protocol}//${window.location.hostname}:8081`
     : '/api-usuarios';
@@ -17,6 +5,10 @@ const API_USUARIOS = window.location.hostname === 'localhost' || window.location
 const API_GESTION = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
     ? `${window.location.protocol}//${window.location.hostname}:8082`
     : '/api-gestion';
+
+const API_RECOLECCION = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? `${window.location.protocol}//${window.location.hostname}:8083`
+    : '/api-recoleccion';
 
 const TOKEN_KEY = 'geobrillo_token';
 
@@ -32,10 +24,6 @@ function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
 }
 
-/**
- * Consulta a api-usuarios/sesion.php si el token guardado sigue
- * siendo válido. Devuelve el objeto usuario, o null si no hay sesión.
- */
 async function obtenerSesionActual() {
     const token = getToken();
     if (!token) return null;
@@ -50,7 +38,6 @@ async function obtenerSesionActual() {
     }
 }
 
-/** true si el usuario está logueado y su rol NO es Ciudadano. */
 function puedeGestionar(usuario) {
     return !!usuario && usuario.nombre_rol !== 'Ciudadano';
 }
@@ -71,17 +58,6 @@ async function cerrarSesion() {
     }
 }
 
-/**
- * Protege una vista de SOLO LECTURA (por ejemplo, los listados de
- * Contenedores, Camiones y Centros/Maquinaria, que desde el Home son
- * visibles para CUALQUIER rol logueado, incluido Ciudadano). A
- * diferencia de protegerVistaDeGestion(), esta función NO bloquea al
- * Ciudadano — solo exige que haya una sesión iniciada. Es la misma
- * regla que aplican los endpoints de listar en api-gestion (ver
- * Auth::requireLogin). Devuelve el objeto usuario para que la propia
- * página decida si mostrar o no los botones de Agregar/Editar/Eliminar
- * según puedeGestionar(usuario).
- */
 async function protegerVistaConSesion() {
     const usuario = await obtenerSesionActual();
     if (!usuario) {
@@ -91,14 +67,6 @@ async function protegerVistaConSesion() {
     return usuario;
 }
 
-/**
- * Protege una vista de gestión (usuarios/camiones/contenedores/centros).
- * Se llama al principio de cada página protegida. Si no hay sesión o
- * el rol es Ciudadano, redirige al home. Esta es una capa de UX: la
- * protección real y obligatoria está en las APIs (ver middleware/Auth.php
- * en api-usuarios y api-gestion), que devuelven 401/403 igual si
- * alguien intenta saltarse esta pantalla y llamar al endpoint directo.
- */
 async function protegerVistaDeGestion() {
     const usuario = await obtenerSesionActual();
     if (!puedeGestionar(usuario)) {
@@ -109,13 +77,6 @@ async function protegerVistaDeGestion() {
     return usuario;
 }
 
-/**
- * Arma el menú (sidebar + navbar) del index según el estado de sesión:
- *  - Sin sesión / Ciudadano: solo Inicio, Mapa, Contacto, Login, Registro.
- *  - Logueado con rol de gestión (Chofer/Operador/Cuadrilla/Administrador):
- *    aparecen además Usuarios, Contenedores, Camiones, Centros de Acopio,
- *    y el botón de Login/Registro se reemplaza por "Cerrar sesión".
- */
 async function renderizarNavSegunSesion() {
     const usuario = await obtenerSesionActual();
     const gestion = puedeGestionar(usuario);
@@ -144,3 +105,22 @@ async function renderizarNavSegunSesion() {
         btnLogout.addEventListener('click', cerrarSesion);
     }
 }
+
+function esc(valor, vacio = '-') {
+    return String(valor ?? vacio)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+function attr(objeto) {
+    return esc(JSON.stringify(objeto));
+}
+
+document.addEventListener('click', function (e) {
+    const enlace = e.target.closest('a.js-volver');
+    if (!enlace) return;
+    if (history.length > 1) {
+        e.preventDefault();
+        history.back();
+    }
+});

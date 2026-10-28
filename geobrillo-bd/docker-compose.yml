@@ -1,0 +1,24 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: geobrillo_servidor_bd
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: geobrillo
+      MYSQL_USER: sigeru_user
+      MYSQL_PASSWORD: sigeru_password_123
+    ports:
+      - "3306:3306"
+    volumes:
+      - bd_datos:/var/lib/mysql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  bd_datos:
+

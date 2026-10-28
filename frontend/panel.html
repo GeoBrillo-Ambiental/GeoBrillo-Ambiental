@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de control - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="marca.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
+
+        <div class="flex flex-wrap justify-between items-center gap-3">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">📊 Panel de control</h1>
+            <div class="flex gap-2">
+                <a href="notificaciones.html" class="relative bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">
+                    🔔 Alertas <span id="badge" class="hidden ml-1 bg-red-600 text-white text-xs rounded-full px-2 py-0.5"></span>
+                </a>
+                <a href="mensajes.html" class="bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">✉️ Mensajes</a>
+                <a href="informes.html" class="bg-green-700 hover:bg-green-800 text-white rounded-lg px-4 py-2">📄 Informes</a>
+            </div>
+        </div>
+
+        <div id="alertaAbiertas" class="hidden bg-amber-100 border border-amber-300 text-amber-900 rounded-xl p-4"></div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-amber-600" id="kAbiertas">-</p><p class="text-gray-600 text-sm">Incidencias abiertas</p></div>
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-green-700" id="kCerradas">-</p><p class="text-gray-600 text-sm">Incidencias cerradas</p></div>
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-red-600" id="kDesbordados">-</p><p class="text-gray-600 text-sm">Contenedores desbordados</p></div>
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-gray-800" id="kKg">-</p><p class="text-gray-600 text-sm">Kg recolectados</p></div>
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-sky-700" id="kRepuesto">-</p><p class="text-gray-600 text-sm">Contenedores de repuesto</p></div>
+            <div class="bg-white rounded-2xl shadow p-4 text-center"><p class="text-3xl font-bold text-gray-800" id="kTiempo">-</p><p class="text-gray-600 text-sm">Días promedio de resolución</p></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Top de contenedores desbordados del mes</h2>
+                <canvas id="gTop"></canvas>
+                <p id="vacioTop" class="hidden text-gray-500 text-sm">Sin reportes de desborde este mes.</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Estado de los contenedores</h2>
+                <canvas id="gEstado"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Incidencias por estado</h2>
+                <canvas id="gInc"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Kg recolectados por zona</h2>
+                <canvas id="gZona"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Zonas críticas (incidencias por zona)</h2>
+                <canvas id="gCriticas"></canvas>
+            </div>
+            <div class="bg-white rounded-2xl shadow p-4">
+                <h2 class="font-semibold mb-2">Frecuencia de recolección por mes</h2>
+                <canvas id="gMes"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        const COL = ['#16a34a', '#dc2626', '#f59e0b', '#2563eb', '#7c3aed', '#6b7280'];
+
+        function grafico(id, tipo, etiquetas, datos, etiqueta) {
+            new Chart(document.getElementById(id), {
+                type: tipo,
+                data: { labels: etiquetas, datasets: [{ label: etiqueta, data: datos, backgroundColor: COL }] },
+                options: { plugins: { legend: { display: tipo !== 'bar' } }, scales: tipo === 'bar' ? { y: { beginAtZero: true, ticks: { precision: 0 } } } : {} }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const usuario = await protegerVistaDeGestion();
+            if (!usuario) return;
+
+            const token = encodeURIComponent(getToken());
+            const [p, n] = await Promise.all([
+                fetch(`${API_GESTION}/estadisticaapi.php?accion=panel&token=${token}`).then(r => r.json()),
+                fetch(`${API_GESTION}/notificacionapi.php?accion=listar&token=${token}`).then(r => r.json()),
+            ]);
+
+            if (n.exito && n.no_leidas > 0) {
+                const b = document.getElementById('badge');
+                b.textContent = n.no_leidas; b.classList.remove('hidden');
+            }
+            if (!p.exito) return;
+            const d = p.data;
+
+            document.getElementById('kAbiertas').textContent = d.incidencias_abiertas;
+            document.getElementById('kCerradas').textContent = d.incidencias_cerradas;
+            const desb = (d.contenedores_por_estado.find(x => x.Estado === 'Desbordado') || { Total: 0 }).Total;
+            document.getElementById('kDesbordados').textContent = desb;
+            document.getElementById('kKg').textContent = d.kg_por_zona.reduce((a, x) => a + Number(x.Kg), 0);
+
+            document.getElementById('kRepuesto').textContent = d.contenedores_repuesto;
+            document.getElementById('kTiempo').textContent = d.tiempo_medio_resolucion_dias === null ? '-' : d.tiempo_medio_resolucion_dias;
+
+            if (d.incidencias_abiertas > 0) {
+                const a = document.getElementById('alertaAbiertas');
+                a.textContent = `⚠️ Hay ${d.incidencias_abiertas} incidencia(s) abierta(s) pendientes de atención.`;
+                a.classList.remove('hidden');
+            }
+
+            if (d.top_desbordados_mes.length === 0) {
+                document.getElementById('gTop').classList.add('hidden');
+                document.getElementById('vacioTop').classList.remove('hidden');
+            } else {
+                grafico('gTop', 'bar', d.top_desbordados_mes.map(x => `#${x.Id_Contenedor} ${x.Ubicacion || ''}`), d.top_desbordados_mes.map(x => Number(x.Reportes)), 'Reportes');
+            }
+            grafico('gEstado', 'doughnut', d.contenedores_por_estado.map(x => x.Estado), d.contenedores_por_estado.map(x => Number(x.Total)), 'Contenedores');
+            grafico('gInc', 'doughnut', d.incidencias_por_estado.map(x => x.Estado), d.incidencias_por_estado.map(x => Number(x.Total)), 'Incidencias');
+            grafico('gCriticas', 'bar', d.zonas_criticas.map(x => x.Zona), d.zonas_criticas.map(x => Number(x.Incidencias)), 'Incidencias');
+            grafico('gMes', 'bar', d.recolecciones_por_mes.map(x => x.Mes), d.recolecciones_por_mes.map(x => Number(x.Recolecciones)), 'Recolecciones');
+            grafico('gZona', 'bar', d.kg_por_zona.map(x => x.Zona), d.kg_por_zona.map(x => Number(x.Kg)), 'Kg');
+        });
+    </script>
+</body>
+</html>
+

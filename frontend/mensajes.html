@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes de contacto - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto space-y-6">
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">✉️ Mensajes de contacto</h1>
+        <ul id="lista" class="space-y-3"></ul>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        function llamar(accion, id) {
+            const f = new FormData();
+            f.append('accion', accion); f.append('token', getToken()); f.append('id', id);
+            return fetch(`${API_GESTION}/contactoapi.php`, { method: 'POST', body: f }).then(r => r.json());
+        }
+
+        async function cargar() {
+            const r = await fetch(`${API_GESTION}/contactoapi.php?accion=listar&token=${encodeURIComponent(getToken())}`).then(x => x.json());
+            const lista = r.data || [];
+            document.getElementById('lista').innerHTML = lista.length ? lista.map(m => `
+                <li class="rounded-xl p-4 border ${m.Leido == 1 ? 'bg-white border-gray-200' : 'bg-amber-50 border-amber-300'}">
+                    <div class="flex justify-between gap-3 flex-wrap">
+                        <p class="font-semibold">${esc(m.Nombre)} · <a class="text-green-700 underline" href="mailto:${esc(m.Email)}">${esc(m.Email)}</a>${m.Telefono ? ' · ' + esc(m.Telefono) : ''}</p>
+                        <p class="text-xs text-gray-500">${esc(m.Fecha)}</p>
+                    </div>
+                    <p class="my-2 whitespace-pre-line">${esc(m.Mensaje)}</p>
+                    <div class="space-x-2">
+                        ${m.Leido == 1 ? '' : `<button data-id="${esc(m.Id_Contacto)}" class="leido text-sm bg-green-700 text-white rounded-lg px-3 py-1">Marcar leído</button>`}
+                        <button data-id="${esc(m.Id_Contacto)}" class="borrar text-sm bg-red-600 text-white rounded-lg px-3 py-1">Eliminar</button>
+                    </div>
+                </li>`).join('') : '<li class="text-gray-500">No hay mensajes.</li>';
+            document.querySelectorAll('.leido').forEach(b => b.onclick = async () => { await llamar('marcarLeido', b.dataset.id); cargar(); });
+            document.querySelectorAll('.borrar').forEach(b => b.onclick = async () => { if (confirm('¿Eliminar este mensaje?')) { await llamar('eliminar', b.dataset.id); cargar(); } });
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => { if (await protegerVistaDeGestion()) cargar(); });
+    </script>
+</body>
+</html>
+

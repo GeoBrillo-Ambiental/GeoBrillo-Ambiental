@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informes - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div class="max-w-5xl mx-auto space-y-6">
+        <a href="panel.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">📄 Informes de incidencias</h1>
+
+        <div class="flex flex-wrap gap-2">
+            <button id="tabAbiertas" class="px-4 py-2 rounded-lg bg-green-700 text-white">Abiertas</button>
+            <button id="tabCerradas" class="px-4 py-2 rounded-lg bg-white border border-gray-300">Cerradas</button>
+            <button id="btnCsv" class="ml-auto px-4 py-2 rounded-lg bg-white border border-gray-300">⬇️ Exportar CSV</button>
+            <button onclick="window.print()" class="px-4 py-2 rounded-lg bg-white border border-gray-300">🖨️ Imprimir</button>
+        </div>
+
+        <div class="bg-white shadow-xl rounded-2xl p-4 overflow-x-auto">
+            <p id="total" class="mb-2 text-sm text-gray-600"></p>
+            <table class="min-w-full border border-gray-300 text-sm">
+                <thead class="bg-green-700 text-white">
+                    <tr>
+                        <th class="px-3 py-2 border">ID</th><th class="px-3 py-2 border">Estado</th>
+                        <th class="px-3 py-2 border">Problema</th><th class="px-3 py-2 border">Descripción</th>
+                        <th class="px-3 py-2 border">Contenedor</th><th class="px-3 py-2 border">Reportada</th>
+                        <th class="px-3 py-2 border">Resuelta</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla" class="text-center"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        let tipo = 'abiertas', filas = [];
+
+        async function cargar() {
+            const r = await fetch(`${API_GESTION}/estadisticaapi.php?accion=informe&tipo=${tipo}&token=${encodeURIComponent(getToken())}`).then(x => x.json());
+            filas = r.data || [];
+            document.getElementById('total').textContent = `${filas.length} incidencia(s) ${tipo}`;
+            document.getElementById('tabla').innerHTML = filas.length ? filas.map(i => `
+                <tr class="border-t"><td class="px-3 py-2">${esc(i.Id_Incidencia)}</td><td>${esc(i.EstadoInc)}</td>
+                <td>${esc(i.TipoProblema)}</td><td class="text-left">${esc(i.Descripcion)}</td>
+                <td>${esc(i.Id_Contenedor)}</td><td>${esc(i.FchaReportado)}</td><td>${esc(i.FchaResuelto)}</td></tr>`).join('')
+                : '<tr><td colspan="7" class="py-4 text-gray-500">Sin resultados.</td></tr>';
+            document.getElementById('tabAbiertas').className = 'px-4 py-2 rounded-lg ' + (tipo === 'abiertas' ? 'bg-green-700 text-white' : 'bg-white border border-gray-300');
+            document.getElementById('tabCerradas').className = 'px-4 py-2 rounded-lg ' + (tipo === 'cerradas' ? 'bg-green-700 text-white' : 'bg-white border border-gray-300');
+        }
+
+        function csvCelda(v) {
+            let s = String(v ?? '');
+            if (/^[=+\-@]/.test(s)) s = "'" + s;
+            return '"' + s.replace(/"/g, '""') + '"';
+        }
+
+        document.getElementById('btnCsv').addEventListener('click', () => {
+            const cab = ['Id_Incidencia', 'EstadoInc', 'TipoProblema', 'Descripcion', 'Id_Contenedor', 'FchaReportado', 'FchaResuelto'];
+            const csv = [cab.join(',')].concat(filas.map(f => cab.map(c => csvCelda(f[c])).join(','))).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }));
+            a.download = `incidencias_${tipo}.csv`;
+            a.click();
+        });
+        document.getElementById('tabAbiertas').onclick = () => { tipo = 'abiertas'; cargar(); };
+        document.getElementById('tabCerradas').onclick = () => { tipo = 'cerradas'; cargar(); };
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (await protegerVistaDeGestion()) cargar();
+        });
+    </script>
+</body>
+</html>
+

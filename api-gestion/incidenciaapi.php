@@ -20,34 +20,25 @@ try {
     switch ($accion) {
 
         case 'listar':
-            // Cualquier usuario logueado puede ver el listado (incluido
-            // Ciudadano): es la regla "registro y seguimiento de
-            // incidencias" de la letra del proyecto.
+
             Auth::requireLogin($token);
             echo json_encode($controlador->obtenerIncidencias());
             break;
 
         case 'reportar':
-            // Regla de negocio especial: acá el Ciudadano SÍ puede
-            // (de hecho, es quien más va a usar esta acción). El
-            // Id_Usuario que queda registrado sale del token validado,
-            // nunca de lo que mande el cliente por POST.
+
             $usuario = Auth::requireLogin($token);
             echo json_encode($controlador->reportarIncidencia($_POST, $usuario['Id_Usuario']));
             break;
 
         case 'listarCuadrillas':
-            // Para el combo de "asignar cuadrilla" en la pantalla de
-            // gestión. Solo hace falta login, no cambia nada por sí
-            // sola (es de solo lectura).
+
             Auth::requireLogin($token);
             echo json_encode($controlador->obtenerCuadrillas());
             break;
 
         case 'actualizar':
-            // Asignar cuadrilla, cambiar estado o cerrar una
-            // incidencia: solo lo puede hacer gestión, no el Ciudadano
-            // que la reportó.
+
             Auth::requireGestion($token);
             $id = $_POST['id'] ?? '';
             echo json_encode($controlador->actualizarIncidencia($id, $_POST));

@@ -1,9 +1,4 @@
 <?php
-/**
- * Test de integración de login.
- * Requiere que el sistema esté corriendo (docker compose up).
- * Ejecutar:  php tests/test_login.php
- */
 
 $urlLogin = "http://localhost:8081/login.php";
 
@@ -23,7 +18,6 @@ function post_json($url, $data) {
 
 echo "== Test de login ==\n";
 
-// 1) Login con credenciales correctas (usuario admin sembrado por crear_admin.php)
 $respuestaOk = post_json($urlLogin, ["email" => "admin@eco.com", "password" => "1234"]);
 
 if (isset($respuestaOk["exito"]) && $respuestaOk["exito"] === true && !empty($respuestaOk["token"])) {
@@ -33,7 +27,6 @@ if (isset($respuestaOk["exito"]) && $respuestaOk["exito"] === true && !empty($re
     echo "   Respuesta: " . json_encode($respuestaOk) . "\n";
 }
 
-// 2) Login con credenciales incorrectas
 $respuestaError = post_json($urlLogin, ["email" => "admin@eco.com", "password" => "clave_incorrecta"]);
 
 if (isset($respuestaError["exito"]) && $respuestaError["exito"] === false) {

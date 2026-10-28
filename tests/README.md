@@ -12,6 +12,9 @@ la lógica de negocio (validaciones, reglas) sin depender de MySQL.
 ```bash
 php tests/unit/UsuarioControladorTest.php
 php tests/unit/CamionControladorTest.php
+php tests/unit/IncidenciaControladorTest.php
+php tests/unit/RecoleccionControladoresTest.php
+php tests/unit/GestionControladoresTest.php
 
 # o todos juntos:
 php tests/unit/run_all.php
@@ -27,7 +30,6 @@ Primero levantar el entorno:
 
 ```bash
 docker compose up --build -d
-docker compose exec api-usuarios php database/crear_admin.php
 ```
 
 Luego correr:
@@ -36,6 +38,7 @@ Luego correr:
 php tests/test_login.php
 php tests/test_permisos_ciudadano.php
 php tests/test_registro_roles.php
+php tests/test_entrega3.php      # 3ra entrega: mapa, panel, alertas, api-recoleccion
 ```
 
 `test_permisos_ciudadano.php` es el más importante del proyecto: es el

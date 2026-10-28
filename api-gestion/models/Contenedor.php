@@ -9,36 +9,46 @@ class Contenedor {
         $this->db = conectar();
     }
 
-    public function insertar($estado, $capacidad, $tipoReciduo, $idRuta) {
-        $sql = "INSERT INTO Contenedor (EstadoCont, CapContenedor, TipoReciduo, Id_Ruta)
-                VALUES (:estado, :capacidad, :tipo, :idRuta)";
+    public function insertar($estado, $capacidad, $tipoReciduo, $idRuta, $ubicacion = null, $lat = null, $lng = null) {
+        $sql = "INSERT INTO Contenedor (EstadoCont, CapContenedor, TipoReciduo, Id_Ruta, Ubicacion, Latitud, Longitud)
+                VALUES (:estado, :capacidad, :tipo, :idRuta, :ubicacion, :lat, :lng)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':estado'    => $estado,
             ':capacidad' => $capacidad,
             ':tipo'      => $tipoReciduo,
             ':idRuta'    => $idRuta,
+            ':ubicacion' => $ubicacion,
+            ':lat'       => $lat,
+            ':lng'       => $lng,
         ]);
     }
 
     public function listar() {
-        $sql = "SELECT Id_Contenedor, EstadoCont, CapContenedor, TipoReciduo, Id_Ruta
+        $sql = "SELECT Id_Contenedor, EstadoCont, CapContenedor, TipoReciduo, Id_Ruta, OrdenRuta, Ubicacion, Latitud, Longitud
                 FROM Contenedor
                 ORDER BY Id_Contenedor DESC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll();
     }
 
-    public function actualizar($id, $estado, $capacidad, $tipoReciduo, $idRuta) {
+    public function actualizar($id, $estado, $capacidad, $tipoReciduo, $idRuta, $ubicacion = null, $lat = null, $lng = null) {
         $sql = "UPDATE Contenedor
-                SET EstadoCont = :estado, CapContenedor = :capacidad, TipoReciduo = :tipo, Id_Ruta = :idRuta
+                SET EstadoCont = :estado, CapContenedor = :capacidad, TipoReciduo = :tipo,
+                    OrdenRuta = CASE WHEN Id_Ruta = :idRutaActual THEN OrdenRuta ELSE NULL END,
+                    Id_Ruta = :idRuta,
+                    Ubicacion = :ubicacion, Latitud = :lat, Longitud = :lng
                 WHERE Id_Contenedor = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':estado'    => $estado,
             ':capacidad' => $capacidad,
             ':tipo'      => $tipoReciduo,
+            ':idRutaActual' => $idRuta,
             ':idRuta'    => $idRuta,
+            ':ubicacion' => $ubicacion,
+            ':lat'       => $lat,
+            ':lng'       => $lng,
             ':id'        => $id,
         ]);
     }
@@ -48,12 +58,6 @@ class Contenedor {
         return $stmt->execute([':id' => $id]);
     }
 
-    /**
-     * Actualiza SOLO el estado del contenedor (sin tocar capacidad,
-     * tipo ni ruta). La usa IncidenciaControlador cuando un Ciudadano
-     * reporta una incidencia: el contenedor pasa a reflejar el
-     * problema reportado (ej. "Desbordado" o "Roto").
-     */
     public function actualizarEstado($id, $estado) {
         $stmt = $this->db->prepare("UPDATE Contenedor SET EstadoCont = :estado WHERE Id_Contenedor = :id");
         return $stmt->execute([':estado' => $estado, ':id' => $id]);

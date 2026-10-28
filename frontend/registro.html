@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro - GeoBrillo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="h-full bg-white-900">
@@ -116,7 +117,7 @@
         .then(res => res.json())
         .then(resultado => {
             if (resultado.exito) {
-                window.location.href = "login.html?registrado=1";
+                window.location.href = resultado.pendiente ? "login.html?registrado=1" : "login.html?registrado=2";
             } else {
                 cartel.textContent = resultado.mensaje;
                 cartel.classList.remove("hidden");
@@ -131,3 +132,4 @@
 
 </body>
 </html>
+

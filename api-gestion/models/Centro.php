@@ -9,9 +9,9 @@ class Centro {
         $this->db = conectar();
     }
 
-    public function insertar($nombre, $direccion, $tipo, $capTotal, $capActual) {
-        $sql = "INSERT INTO CAcopioVertedero (NombreC, DireccionC, TipoCentro, CapTotal, CapActual)
-                VALUES (:nombre, :direccion, :tipo, :capTotal, :capActual)";
+    public function insertar($nombre, $direccion, $tipo, $capTotal, $capActual, $lat = null, $lng = null) {
+        $sql = "INSERT INTO CAcopioVertedero (NombreC, DireccionC, TipoCentro, CapTotal, CapActual, Latitud, Longitud)
+                VALUES (:nombre, :direccion, :tipo, :capTotal, :capActual, :lat, :lng)";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
             ':nombre'    => $nombre,
@@ -19,21 +19,24 @@ class Centro {
             ':tipo'      => $tipo,
             ':capTotal'  => $capTotal,
             ':capActual' => $capActual,
+            ':lat'       => $lat,
+            ':lng'       => $lng,
         ]);
     }
 
     public function listar() {
         $stmt = $this->db->query(
-            "SELECT Id_Centro, NombreC, DireccionC, TipoCentro, CapTotal, CapActual
+            "SELECT Id_Centro, NombreC, DireccionC, TipoCentro, CapTotal, CapActual, Latitud, Longitud
              FROM CAcopioVertedero ORDER BY Id_Centro DESC"
         );
         return $stmt->fetchAll();
     }
 
-    public function actualizar($id, $nombre, $direccion, $tipo, $capTotal, $capActual) {
+    public function actualizar($id, $nombre, $direccion, $tipo, $capTotal, $capActual, $lat = null, $lng = null) {
         $sql = "UPDATE CAcopioVertedero
                 SET NombreC = :nombre, DireccionC = :direccion, TipoCentro = :tipo,
-                    CapTotal = :capTotal, CapActual = :capActual
+                    CapTotal = :capTotal, CapActual = :capActual,
+                    Latitud = :lat, Longitud = :lng
                 WHERE Id_Centro = :id";
         $stmt = $this->db->prepare($sql);
         return $stmt->execute([
@@ -42,6 +45,8 @@ class Centro {
             ':tipo'      => $tipo,
             ':capTotal'  => $capTotal,
             ':capActual' => $capActual,
+            ':lat'       => $lat,
+            ':lng'       => $lng,
             ':id'        => $id,
         ]);
     }

@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reportar Incidencia</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8">
 
     <div class="max-w-lg mx-auto space-y-6">
 
-        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
 
         <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
             <h2 class="text-xl font-bold text-center text-green-700">
@@ -56,13 +57,13 @@
         </div>
 
         <a href="listarincidencias.html" class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-medium rounded-lg py-3 text-center transition">
-            Ver Incidencias Reportadas
+            Ver Incidencias
         </a>
     </div>
 
     <script src="js/auth.js"></script>
     <script>
-        // Cualquier usuario logueado (incluido Ciudadano) puede reportar.
+
         document.addEventListener('DOMContentLoaded', async () => {
             await protegerVistaConSesion();
             cargarContenedores();
@@ -79,7 +80,7 @@
                         return;
                     }
                     select.innerHTML = contenedores.map(c =>
-                        `<option value="${c.Id_Contenedor}">Contenedor #${c.Id_Contenedor} — ${c.TipoReciduo ?? 'sin tipo'} (${c.EstadoCont ?? '-'})</option>`
+                        `<option value="${c.Id_Contenedor}">Contenedor #${c.Id_Contenedor} — ${esc(c.TipoReciduo, 'sin tipo')} (${esc(c.EstadoCont, '-')})</option>`
                     ).join("");
                 })
                 .catch(err => {
@@ -120,3 +121,4 @@
 
 </body>
 </html>
+

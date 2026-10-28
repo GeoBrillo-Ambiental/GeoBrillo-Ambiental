@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Incidencias</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8">
 
     <div class="max-w-6xl mx-auto space-y-6">
 
-        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
 
         <div class="flex flex-wrap items-center justify-between gap-4">
             <h1 class="text-2xl sm:text-3xl font-bold text-green-700">Incidencias ⚠️</h1>
@@ -21,7 +22,6 @@
             </a>
         </div>
 
-        <!-- ============== INFORME SIMPLE ============== -->
         <div class="grid grid-cols-2 gap-4 max-w-md">
             <div class="bg-white shadow-xl rounded-2xl p-4 text-center">
                 <p class="text-sm text-gray-500">Abiertas</p>
@@ -57,7 +57,6 @@
         </div>
     </div>
 
-    <!-- Modal de gestión: asignar cuadrilla / cambiar estado -->
     <div id="modalGestion" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
             <h3 class="text-xl font-bold text-green-700">Gestionar Incidencia</h3>
@@ -70,8 +69,8 @@
                 <div>
                     <label class="block mb-1 text-sm font-medium text-gray-700">Estado</label>
                     <select name="estado" id="gestEstado" required class="w-full border border-gray-300 rounded-lg p-3">
-                        <option value="Reportada">Reportada</option>
-                        <option value="En proceso">En proceso</option>
+                        <option value="Abierta">Abierta</option>
+                        <option value="En curso">En curso</option>
                         <option value="Resuelta">Resuelta</option>
                     </select>
                 </div>
@@ -114,7 +113,7 @@
                     cuadrillasCache = data.data || [];
                     const select = document.getElementById("gestCuadrilla");
                     select.innerHTML = `<option value="">Sin asignar</option>` + cuadrillasCache.map(c =>
-                        `<option value="${c.Id_Cuadrilla}">Cuadrilla #${c.Id_Cuadrilla} (${c.Dia} ${c.Horario})</option>`
+                        `<option value="${c.Id_Cuadrilla}">Cuadrilla #${c.Id_Cuadrilla} (${esc(c.Dia)} ${esc(c.Horario)})</option>`
                     ).join("");
                 })
                 .catch(err => console.error("❌ Error al traer cuadrillas:", err));
@@ -141,11 +140,11 @@
 
                     incidencias.forEach(i => {
                         const cuadrillaHtml = esGestion
-                            ? `<td class="border px-4 py-2">${i.Id_Cuadrilla ?? 'Sin asignar'}</td>`
+                            ? `<td class="border px-4 py-2">${esc(i.Id_Cuadrilla, 'Sin asignar')}</td>`
                             : '';
                         const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-2 space-x-1">
-                                    <button onclick='abrirModal(${JSON.stringify(i)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                    <button onclick="abrirModal(${attr(i)})" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Gestionar
                                     </button>
                                     <button onclick="eliminar(${i.Id_Incidencia})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
@@ -155,13 +154,13 @@
                         const badgeColor = i.EstadoInc === 'Resuelta' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
                         tabla.innerHTML += `
                             <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-2">${i.Id_Incidencia ?? '-'}</td>
-                                <td class="border px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-semibold ${badgeColor}">${i.EstadoInc ?? '-'}</span></td>
-                                <td class="border px-4 py-2 text-left">${i.Descripcion ?? '-'}</td>
-                                <td class="border px-4 py-2">#${i.Id_Contenedor ?? '-'}</td>
-                                <td class="border px-4 py-2">${i.ReportadoPor ?? '-'}</td>
-                                <td class="border px-4 py-2">${i.FchaReportado ?? '-'}</td>
-                                <td class="border px-4 py-2">${i.FchaResuelto ?? '-'}</td>
+                                <td class="border px-4 py-2">${esc(i.Id_Incidencia, '-')}</td>
+                                <td class="border px-4 py-2"><span class="px-2 py-1 rounded-full text-xs font-semibold ${badgeColor}">${esc(i.EstadoInc, '-')}</span></td>
+                                <td class="border px-4 py-2 text-left">${esc(i.Descripcion, '-')}</td>
+                                <td class="border px-4 py-2">#${esc(i.Id_Contenedor, '-')}</td>
+                                <td class="border px-4 py-2">${esc(i.ReportadoPor, '-')}</td>
+                                <td class="border px-4 py-2">${esc(i.FchaReportado, '-')}</td>
+                                <td class="border px-4 py-2">${esc(i.FchaResuelto, '-')}</td>
                                 ${cuadrillaHtml}
                                 ${accionesHtml}
                             </tr>`;
@@ -176,7 +175,7 @@
         function abrirModal(i) {
             document.getElementById("gestId").value = i.Id_Incidencia;
             document.getElementById("gestDescripcion").value = i.Descripcion ?? '';
-            document.getElementById("gestEstado").value = i.EstadoInc ?? 'Reportada';
+            document.getElementById("gestEstado").value = i.EstadoInc ?? 'Abierta';
             document.getElementById("gestCuadrilla").value = i.Id_Cuadrilla ?? '';
             document.getElementById("modalGestion").classList.remove("hidden");
         }
@@ -226,3 +225,4 @@
 
 </body>
 </html>
+

@@ -5,28 +5,11 @@ class UsuarioControlador {
 
     private $modelo;
 
-    /**
-     * Se permite inyectar el modelo (dependencia) para poder testear
-     * este controlador sin necesidad de una base de datos real.
-     */
     public function __construct($modelo = null) {
         $this->modelo = $modelo ?? new Usuario();
     }
 
-    /**
-     * Da de alta un usuario.
-     *
-     * @param array         $datos           Datos del formulario (pri_nom, pri_ape, ...).
-     * @param array|null    $rolesPermitidos Whitelist de Id_Rol permitidos para esta alta.
-     *   - null (default): sin restricción. Lo usa usuarioapi.php, que ya está
-     *     protegido por Auth::requireGestion (solo roles de gestión logueados
-     *     pueden llegar hasta aquí).
-     *   - array de IDs (ej. [1,2,3,4]): lo usa registro.php, el endpoint
-     *     PÚBLICO (sin token). Evita que cualquiera pueda autoregistrarse
-     *     como Administrador (Id_Rol 5) mandando el id_rol a mano por POST,
-     *     sin depender de que el frontend oculte esa opción.
-     */
-    public function agregarUsuario($datos, $rolesPermitidos = null) {
+    public function agregarUsuario($datos, $rolesPermitidos = null, $estado = 'Activo') {
         $priNom      = trim($datos['pri_nom'] ?? '');
         $priApe      = trim($datos['pri_ape'] ?? '');
         $nomUsuario  = trim($datos['nom_usuario'] ?? '');
@@ -51,18 +34,39 @@ class UsuarioControlador {
             return ["exito" => false, "mensaje" => "Ese nombre de usuario ya está en uso."];
         }
 
-        $resultado = $this->modelo->insertar($priNom, $priApe, $nomUsuario, $password, $email, $idRol, $idCuadrilla);
+        $resultado = $this->modelo->insertar($priNom, $priApe, $nomUsuario, $password, $email, $idRol, $idCuadrilla, $estado);
+
+        if ($resultado && $estado === 'Pendiente') {
+            return ["exito" => true, "mensaje" => "Solicitud de registro enviada. Un administrador debe aprobarla antes de que puedas iniciar sesión."];
+        }
 
         return $resultado
             ? ["exito" => true, "mensaje" => "Usuario registrado correctamente."]
             : ["exito" => false, "mensaje" => "Error al registrar el usuario."];
     }
 
+    public function resolverSolicitud($id, $decision) {
+        if (empty($id)) {
+            return ["exito" => false, "mensaje" => "ID no válido."];
+        }
+        if ($decision !== 'Activo' && $decision !== 'Rechazado') {
+            return ["exito" => false, "mensaje" => "Decisión no válida."];
+        }
+        return $this->modelo->cambiarEstado($id, $decision)
+            ? ["exito" => true, "mensaje" => $decision === 'Activo' ? "Solicitud aprobada." : "Solicitud rechazada."]
+            : ["exito" => false, "mensaje" => "No se pudo actualizar la solicitud."];
+    }
+
     public function obtenerUsuarios() {
         return ["exito" => true, "data" => $this->modelo->listar()];
     }
 
-    public function actualizarUsuario($id, $datos) {
+    public function esAdministrador($id) {
+        $u = $this->modelo->buscarPorId($id);
+        return $u !== null && (int)$u['Id_Rol'] === 5;
+    }
+
+    public function actualizarUsuario($id, $datos, $rolesPermitidos = null) {
         if (empty($id)) {
             return ["exito" => false, "mensaje" => "ID no válido."];
         }
@@ -75,6 +79,10 @@ class UsuarioControlador {
 
         if ($priNom === '' || $priApe === '' || $idRol === '') {
             return ["exito" => false, "mensaje" => "Nombre, apellido y rol son obligatorios."];
+        }
+
+        if ($rolesPermitidos !== null && !in_array((int)$idRol, $rolesPermitidos, true)) {
+            return ["exito" => false, "mensaje" => "No tenés permiso para asignar ese rol."];
         }
 
         $resultado = $this->modelo->actualizar($id, $priNom, $priApe, $email, $idRol, $idCuadrilla);

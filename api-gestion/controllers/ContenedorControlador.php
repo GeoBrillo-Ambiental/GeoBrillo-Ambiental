@@ -9,17 +9,34 @@ class ContenedorControlador {
         $this->modelo = $modelo ?? new Contenedor();
     }
 
+    private function leerUbicacion($datos) {
+        $ubicacion = trim($datos['ubicacion'] ?? '');
+        $lat = trim((string)($datos['latitud'] ?? ''));
+        $lng = trim((string)($datos['longitud'] ?? ''));
+        if ($lat !== '' || $lng !== '') {
+            if (!is_numeric($lat) || !is_numeric($lng) || abs($lat) > 90 || abs($lng) > 180) {
+                return null;
+            }
+        }
+        return [$ubicacion === '' ? null : $ubicacion, $lat === '' ? null : (float)$lat, $lng === '' ? null : (float)$lng];
+    }
+
     public function agregarContenedor($datos) {
         $estado    = trim($datos['estado'] ?? '');
         $tipo      = trim($datos['residuo'] ?? '');
         $capacidad = $datos['capacidad'] ?? '';
         $idRuta    = $datos['id_ruta'] ?? '';
 
-        if ($estado === '' || $tipo === '' || $capacidad === '' || $idRuta === '') {
-            return ["exito" => false, "mensaje" => "Todos los campos son obligatorios."];
+        if ($estado === '' || $tipo === '' || $capacidad === '') {
+            return ["exito" => false, "mensaje" => "Estado, tipo de residuo y capacidad son obligatorios."];
         }
 
-        $resultado = $this->modelo->insertar($estado, $capacidad, $tipo, (int)$idRuta);
+        $ubic = $this->leerUbicacion($datos);
+        if ($ubic === null) {
+            return ["exito" => false, "mensaje" => "Latitud/longitud inválidas."];
+        }
+
+        $resultado = $this->modelo->insertar($estado, $capacidad, $tipo, ($idRuta === '' ? null : (int)$idRuta), $ubic[0], $ubic[1], $ubic[2]);
 
         return $resultado
             ? ["exito" => true, "mensaje" => "Contenedor guardado con éxito."]
@@ -39,11 +56,16 @@ class ContenedorControlador {
         $capacidad = $datos['capacidad'] ?? '';
         $idRuta    = $datos['id_ruta'] ?? '';
 
-        if ($estado === '' || $tipo === '' || $capacidad === '' || $idRuta === '') {
-            return ["exito" => false, "mensaje" => "Todos los campos son obligatorios."];
+        if ($estado === '' || $tipo === '' || $capacidad === '') {
+            return ["exito" => false, "mensaje" => "Estado, tipo de residuo y capacidad son obligatorios."];
         }
 
-        $resultado = $this->modelo->actualizar($id, $estado, $capacidad, $tipo, (int)$idRuta);
+        $ubic = $this->leerUbicacion($datos);
+        if ($ubic === null) {
+            return ["exito" => false, "mensaje" => "Latitud/longitud inválidas."];
+        }
+
+        $resultado = $this->modelo->actualizar($id, $estado, $capacidad, $tipo, ($idRuta === '' ? null : (int)$idRuta), $ubic[0], $ubic[1], $ubic[2]);
 
         return $resultado
             ? ["exito" => true, "mensaje" => "Contenedor actualizado correctamente."]

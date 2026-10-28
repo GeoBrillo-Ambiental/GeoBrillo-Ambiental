@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logística - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="marca.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">🚛 Logística de recolección</h1>
+        <p class="text-gray-600 text-sm">Cuadrillas, rutas y recolecciones registradas (API de Recolección).</p>
+
+        <div class="flex gap-2" id="tabs"></div>
+
+        <div class="bg-white shadow rounded-2xl p-4">
+            <h2 id="tituloForm" class="font-semibold mb-3"></h2>
+            <form id="form" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></form>
+            <p id="msg" class="mt-2 text-sm"></p>
+        </div>
+
+        <div id="editorRuta" class="hidden bg-white shadow rounded-2xl p-4 space-y-3">
+            <h2 class="font-semibold">🗺️ Armar una ruta eligiendo contenedores en el mapa</h2>
+            <p class="text-sm text-gray-600">
+                Elegí la ruta, y hacé clic en los contenedores del mapa en el orden en que se recorren
+                (otro clic los quita). Los grises pertenecen a otra ruta: si los elegís, pasan a esta.
+            </p>
+            <div class="flex flex-wrap gap-2 items-center">
+                <label class="text-sm font-medium">Ruta:</label>
+                <select id="rutaEditar" class="border border-gray-300 rounded-lg p-2"></select>
+                <button id="btnGuardarRuta" class="bg-green-700 hover:bg-green-800 text-white rounded-lg px-4 py-2">Guardar ruta</button>
+                <span id="msgRuta" class="text-sm"></span>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="lg:col-span-2 rounded-lg border border-gray-300" id="mapaRuta" style="height: 440px;"></div>
+                <div class="space-y-3">
+                    <div>
+                        <h3 class="font-medium text-sm mb-1">Orden de recorrido</h3>
+                        <ol id="ordenRuta" class="space-y-1 text-sm"></ol>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-sm mb-1">Contenedores sin ubicación en el mapa</h3>
+                        <p class="text-xs text-gray-500 mb-1">No se pueden clicar; elegilos acá.</p>
+                        <div id="sinCoordenadas" class="space-y-1 text-sm"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white shadow rounded-2xl p-4 overflow-x-auto">
+            <table class="min-w-full border border-gray-300 text-sm">
+                <thead id="thead" class="bg-green-700 text-white"></thead>
+                <tbody id="tbody" class="text-center"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+
+        const ENT = {
+            cuadrilla: {
+                titulo: 'Cuadrillas', api: 'cuadrillaapi.php', pk: 'Id_Cuadrilla',
+                campos: [
+                    ['dia', 'Día', 'Dia', 'text'], ['horario', 'Horario (ej. 08:00-14:00)', 'Horario', 'text'],
+                    ['id_rol', 'Id Rol (chofer = 2)', 'Id_Rol', 'number'], ['id_rol2', 'Id Rol 2 (cuadrilla = 4)', 'Id_Rol2', 'number'],
+                    ['id_camion', 'Id Camión', 'Id_Camion', 'number']
+                ]
+            },
+            ruta: {
+                titulo: 'Rutas', api: 'rutaapi.php', pk: 'Id_Ruta',
+                campos: [
+                    ['dia_hora', 'Día y hora', 'DiaHora', 'text'], ['id_zona', 'Id Zona', 'Id_Zona', 'number'],
+                    ['id_centro', 'Id Centro', 'Id_Centro', 'number'], ['id_cuadrilla', 'Id Cuadrilla', 'Id_Cuadrilla', 'number']
+                ]
+            },
+            recoleccion: {
+                titulo: 'Recolecciones', api: 'recoleccionapi.php', pk: 'Id_Recoleccion',
+                campos: [
+                    ['fecha', 'Fecha', 'Fecha', 'date'], ['kg', 'Kg recolectados', 'KgRecolectados', 'number'],
+                    ['observaciones', 'Observaciones (opcional)', 'Observaciones', 'text', true],
+                    ['id_ruta', 'Id Ruta', 'Id_Ruta', 'number'], ['id_contenedor', 'Id Contenedor', 'Id_Contenedor', 'number']
+                ]
+            }
+        };
+        let actual = 'cuadrilla', editando = null;
+
+        function llamar(accion, extra) {
+            const f = new FormData();
+            f.append('accion', accion); f.append('token', getToken());
+            Object.entries(extra || {}).forEach(([k, v]) => f.append(k, v));
+            return fetch(`${API_RECOLECCION}/${ENT[actual].api}`, { method: 'POST', body: f }).then(r => r.json());
+        }
+
+        function pintarTabs() {
+            document.getElementById('tabs').innerHTML = Object.entries(ENT).map(([k, e]) =>
+                `<button data-k="${k}" class="px-4 py-2 rounded-lg ${k === actual ? 'bg-green-700 text-white' : 'bg-white border border-gray-300'}">${e.titulo}</button>`).join('');
+            document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { actual = b.dataset.k; editando = null; render(); });
+        }
+
+        function pintarForm() {
+            const e = ENT[actual];
+            document.getElementById('tituloForm').textContent = (editando ? 'Editar ' : 'Agregar ') + e.titulo.toLowerCase();
+            document.getElementById('form').innerHTML = e.campos.map(c =>
+                `<div><label class="block text-xs text-gray-600 mb-1">${c[1]}</label>
+                 <input name="${c[0]}" type="${c[3]}" ${c[4] ? '' : 'required'} class="w-full border border-gray-300 rounded-lg p-2"></div>`).join('') +
+                `<div class="flex gap-2 items-end"><button class="bg-green-700 text-white rounded-lg px-4 py-2">${editando ? 'Guardar cambios' : 'Agregar'}</button>
+                 ${editando ? '<button type="button" id="cancelar" class="bg-gray-100 border border-gray-300 rounded-lg px-4 py-2">Cancelar</button>' : ''}</div>`;
+            if (editando) {
+                e.campos.forEach(c => document.querySelector(`[name="${c[0]}"]`).value = editando[c[2]] ?? '');
+                document.getElementById('cancelar').onclick = () => { editando = null; pintarForm(); };
+            }
+        }
+
+        async function listar() {
+            const e = ENT[actual];
+            const r = await fetch(`${API_RECOLECCION}/${e.api}?accion=listar&token=${encodeURIComponent(getToken())}`).then(x => x.json());
+            const filas = r.data || [];
+            document.getElementById('thead').innerHTML = '<tr>' + [e.pk, ...e.campos.map(c => c[2])].map(h => `<th class="px-3 py-2 border">${h}</th>`).join('') + '<th class="px-3 py-2 border">Acciones</th></tr>';
+            document.getElementById('tbody').innerHTML = filas.length ? filas.map((f, i) =>
+                '<tr class="border-t">' + [e.pk, ...e.campos.map(c => c[2])].map(h => `<td class="px-3 py-2">${esc(f[h])}</td>`).join('') +
+                `<td class="px-3 py-2"><button data-i="${i}" class="ed bg-amber-500 text-white px-3 py-1 rounded">Editar</button>
+                 <button data-id="${esc(f[e.pk])}" class="del bg-red-600 text-white px-3 py-1 rounded">Eliminar</button></td></tr>`).join('')
+                : `<tr><td colspan="${e.campos.length + 2}" class="py-4 text-gray-500">Sin registros.</td></tr>`;
+            document.querySelectorAll('.ed').forEach(b => b.onclick = () => { editando = filas[b.dataset.i]; pintarForm(); window.scrollTo(0, 0); });
+            document.querySelectorAll('.del').forEach(b => b.onclick = async () => {
+                if (!confirm('¿Eliminar este registro?')) return;
+                const res = await llamar('eliminar', { id: b.dataset.id });
+                mostrar(res); listar(); if (actual === 'ruta') abrirEditorRuta();
+            });
+        }
+
+        function mostrar(res) {
+            const m = document.getElementById('msg');
+            m.textContent = res.mensaje || '';
+            m.className = 'mt-2 text-sm ' + (res.exito ? 'text-green-700' : 'text-red-600');
+        }
+
+        document.getElementById('form').addEventListener('submit', async ev => {
+            ev.preventDefault();
+            const datos = Object.fromEntries(new FormData(ev.target));
+            if (editando) datos.id = editando[ENT[actual].pk];
+            const res = await llamar(editando ? 'actualizar' : 'insertar', datos);
+            mostrar(res);
+            if (res.exito) { editando = null; pintarForm(); listar(); if (actual === 'ruta') abrirEditorRuta(); }
+        });
+
+        let mapaRuta = null, capaRuta = null, contenedores = [], seleccion = [];
+        const porId = id => contenedores.find(c => String(c.Id_Contenedor) === String(id));
+
+        async function abrirEditorRuta() {
+            const cont = await fetch(`${API_GESTION}/contenedorapi.php?accion=listar&token=${encodeURIComponent(getToken())}`).then(r => r.json());
+            contenedores = cont.data || [];
+            const rutas = await fetch(`${API_RECOLECCION}/rutaapi.php?accion=listar&token=${encodeURIComponent(getToken())}`).then(r => r.json());
+            const sel = document.getElementById('rutaEditar');
+            const previa = sel.value;
+            sel.innerHTML = (rutas.data || []).map(r => `<option value="${esc(r.Id_Ruta)}">#${esc(r.Id_Ruta)} · ${esc(r.DiaHora)} · ${esc(r.NomZona)}</option>`).join('');
+            if (previa) sel.value = previa;
+
+            if (!mapaRuta) {
+                mapaRuta = L.map('mapaRuta').setView([-34.9011, -56.1645], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> colaboradores'
+                }).addTo(mapaRuta);
+                capaRuta = L.layerGroup().addTo(mapaRuta);
+                sel.addEventListener('change', cargarSeleccionDeRuta);
+            }
+            setTimeout(() => mapaRuta.invalidateSize(), 50);
+            cargarSeleccionDeRuta();
+        }
+
+        function cargarSeleccionDeRuta() {
+            const idRuta = document.getElementById('rutaEditar').value;
+            seleccion = contenedores
+                .filter(c => String(c.Id_Ruta) === String(idRuta))
+                .sort((a, b) => (a.OrdenRuta ?? 9999) - (b.OrdenRuta ?? 9999) || a.Id_Contenedor - b.Id_Contenedor)
+                .map(c => String(c.Id_Contenedor));
+            document.getElementById('msgRuta').textContent = '';
+            dibujarEditor();
+        }
+
+        function alternar(id) {
+            id = String(id);
+            const i = seleccion.indexOf(id);
+            if (i >= 0) seleccion.splice(i, 1); else seleccion.push(id);
+            dibujarEditor();
+        }
+
+        function mover(id, delta) {
+            const i = seleccion.indexOf(String(id)), j = i + delta;
+            if (i < 0 || j < 0 || j >= seleccion.length) return;
+            [seleccion[i], seleccion[j]] = [seleccion[j], seleccion[i]];
+            dibujarEditor();
+        }
+
+        function dibujarEditor() {
+            const idRuta = document.getElementById('rutaEditar').value;
+            capaRuta.clearLayers();
+
+            contenedores.forEach(c => {
+                if (c.Latitud === null || c.Longitud === null) return;
+                const pos = seleccion.indexOf(String(c.Id_Contenedor));
+                const enOtra = c.Id_Ruta && String(c.Id_Ruta) !== String(idRuta);
+                const color = pos >= 0 ? '#2563eb' : (enOtra ? '#9ca3af' : '#16a34a');
+                const m = L.circleMarker([+c.Latitud, +c.Longitud], { radius: pos >= 0 ? 12 : 9, color: '#fff', weight: 2, fillColor: color, fillOpacity: 0.95 }).addTo(capaRuta);
+                m.bindTooltip(
+                    (pos >= 0 ? `<b>${pos + 1}</b> · ` : '') + `#${esc(c.Id_Contenedor)} ${esc(c.Ubicacion)}` + (enOtra ? ` (ruta #${esc(c.Id_Ruta)})` : ''),
+                    { permanent: pos >= 0, direction: 'top' });
+                m.on('click', () => alternar(c.Id_Contenedor));
+            });
+
+            const puntos = seleccion.map(porId).filter(c => c && c.Latitud !== null).map(c => [+c.Latitud, +c.Longitud]);
+            if (puntos.length > 1) L.polyline(puntos, { color: '#2563eb', weight: 3, dashArray: '6 6' }).addTo(capaRuta);
+
+            document.getElementById('ordenRuta').innerHTML = seleccion.length ? seleccion.map((id, i) => {
+                const c = porId(id) || {};
+                const otra = c.Id_Ruta && String(c.Id_Ruta) !== String(idRuta) ? ` <span class="text-amber-700">(estaba en ruta #${esc(c.Id_Ruta)})</span>` : '';
+                return `<li class="flex items-center gap-1"><span class="w-5 text-right">${i + 1}.</span>
+                    <span class="flex-1">#${esc(id)} ${esc(c.Ubicacion)}${otra}</span>
+                    <button data-m="${esc(id)}" data-d="-1" class="mv px-1">▲</button><button data-m="${esc(id)}" data-d="1" class="mv px-1">▼</button>
+                    <button data-q="${esc(id)}" class="qt px-1 text-red-600">✕</button></li>`;
+            }).join('') : '<li class="text-gray-500">Ninguno: la ruta quedará vacía.</li>';
+            document.querySelectorAll('.mv').forEach(b => b.onclick = () => mover(b.dataset.m, +b.dataset.d));
+            document.querySelectorAll('.qt').forEach(b => b.onclick = () => alternar(b.dataset.q));
+
+            const sin = contenedores.filter(c => c.Latitud === null || c.Longitud === null);
+            document.getElementById('sinCoordenadas').innerHTML = sin.length ? sin.map(c =>
+                `<label class="flex gap-2 items-center"><input type="checkbox" data-s="${esc(c.Id_Contenedor)}" ${seleccion.includes(String(c.Id_Contenedor)) ? 'checked' : ''}>
+                 #${esc(c.Id_Contenedor)} ${esc(c.Ubicacion)}</label>`).join('') : '<p class="text-gray-500">Todos tienen ubicación.</p>';
+            document.querySelectorAll('[data-s]').forEach(ch => ch.onchange = () => alternar(ch.dataset.s));
+        }
+
+        document.getElementById('btnGuardarRuta').addEventListener('click', async () => {
+            const f = new FormData();
+            f.append('accion', 'asignarContenedores'); f.append('token', getToken());
+            f.append('id', document.getElementById('rutaEditar').value);
+            f.append('contenedores', seleccion.join(','));
+            const res = await fetch(`${API_RECOLECCION}/rutaapi.php`, { method: 'POST', body: f }).then(r => r.json());
+            const m = document.getElementById('msgRuta');
+            m.textContent = res.mensaje || '';
+            m.className = 'text-sm ' + (res.exito ? 'text-green-700' : 'text-red-600');
+            if (res.exito) abrirEditorRuta();
+        });
+
+        function render() {
+            pintarTabs(); pintarForm(); document.getElementById('msg').textContent = ''; listar();
+            const esRuta = actual === 'ruta';
+            document.getElementById('editorRuta').classList.toggle('hidden', !esRuta);
+            if (esRuta) abrirEditorRuta();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => { if (await protegerVistaDeGestion()) render(); });
+    </script>
+</body>
+</html>
+

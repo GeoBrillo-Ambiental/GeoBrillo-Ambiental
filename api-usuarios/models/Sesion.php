@@ -1,15 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/conexion.php';
 
-/**
- * Modelo Sesion.
- *
- * Como el sistema está separado en microservicios (cada API en su
- * propio contenedor/puerto), no podemos usar cookies de sesión PHP
- * clásicas. En su lugar, el login genera un TOKEN random que se
- * guarda en esta tabla, y el frontend lo reenvía en cada petición a
- * una API protegida (por querystring o por POST, según el endpoint).
- */
 class Sesion {
 
     private $db;
@@ -36,10 +27,6 @@ class Sesion {
         return $token;
     }
 
-    /**
-     * Valida un token y devuelve los datos del usuario (con su rol) si
-     * es válido y no está vencido. Devuelve null si no es válido.
-     */
     public function validar($token) {
         if (empty($token)) {
             return null;
@@ -51,7 +38,7 @@ class Sesion {
                 FROM Sesion s
                 INNER JOIN Usuario u ON s.Id_Usuario = u.Id_Usuario
                 INNER JOIN Rol r ON u.Id_Rol = r.Id_Rol
-                WHERE s.Token = :token
+                WHERE s.Token = :token AND u.Estado = 'Activo'
                 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':token' => $token]);

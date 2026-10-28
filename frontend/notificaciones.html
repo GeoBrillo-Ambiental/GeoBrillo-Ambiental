@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alertas - GeoBrillo</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
+</head>
+
+<body class="bg-gray-100 min-h-screen p-4 sm:p-8">
+    <div class="max-w-3xl mx-auto space-y-6">
+        <a href="panel.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
+        <div class="flex justify-between items-center">
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">🔔 Alertas</h1>
+            <button id="btnTodas" class="bg-white border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50">Marcar todas como leídas</button>
+        </div>
+        <ul id="lista" class="space-y-3"></ul>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script>
+        async function llamar(accion, extra = {}) {
+            const f = new FormData();
+            f.append('accion', accion); f.append('token', getToken());
+            Object.entries(extra).forEach(([k, v]) => f.append(k, v));
+            return fetch(`${API_GESTION}/notificacionapi.php`, { method: 'POST', body: f }).then(r => r.json());
+        }
+
+        async function cargar() {
+            const r = await fetch(`${API_GESTION}/notificacionapi.php?accion=listar&token=${encodeURIComponent(getToken())}`).then(x => x.json());
+            const lista = r.data || [];
+            document.getElementById('lista').innerHTML = lista.length ? lista.map(n => `
+                <li class="rounded-xl p-4 border ${n.Leida == 1 ? 'bg-white border-gray-200 text-gray-500' : 'bg-amber-50 border-amber-300'} flex justify-between items-center gap-3">
+                    <div><p class="font-medium">${esc(n.Mensaje)}</p><p class="text-xs text-gray-500">${esc(n.Fecha)}</p></div>
+                    ${n.Tipo === 'Contacto' ? '<a href="mensajes.html" class="text-sm bg-white border border-gray-300 rounded-lg px-3 py-1">Ver mensaje</a>' : (n.Tipo === 'Incidencia' ? '<a href="listarincidencias.html" class="text-sm bg-white border border-gray-300 rounded-lg px-3 py-1">Ver incidencias</a>' : '')}
+                    ${n.Leida == 1 ? '' : `<button data-id="${esc(n.Id_Notificacion)}" class="leida text-sm bg-green-700 text-white rounded-lg px-3 py-1">Marcar leída</button>`}
+                </li>`).join('') : '<li class="text-gray-500">No hay alertas.</li>';
+            document.querySelectorAll('.leida').forEach(b => b.onclick = async () => { await llamar('marcarLeida', { id: b.dataset.id }); cargar(); });
+        }
+
+        document.getElementById('btnTodas').onclick = async () => { await llamar('marcarTodas'); cargar(); };
+        document.addEventListener('DOMContentLoaded', async () => { if (await protegerVistaDeGestion()) cargar(); });
+    </script>
+</body>
+</html>
+

@@ -1,13 +1,4 @@
 <?php
-/**
- * Test de integración: el endpoint público registro.php no debe
- * permitir que alguien se autoasigne el rol Administrador (Id_Rol 5)
- * mandando id_rol=5 a mano, aunque el formulario (registro.html) no
- * muestre esa opción en el navegador.
- *
- * Requiere que el sistema esté corriendo (docker compose up).
- * Ejecutar:  php tests/test_registro_roles.php
- */
 
 $API_USUARIOS = "http://localhost:8081";
 
@@ -27,7 +18,6 @@ function post_form($url, $data) {
 
 echo "== Test de roles permitidos en el registro público ==\n";
 
-// --- Intento de autoregistro como Administrador (Id_Rol 5) ---
 $email = "intruso_" . time() . "@eco.com";
 $respuesta = post_form("$API_USUARIOS/registro.php", [
     "pri_nom" => "Intruso", "pri_ape" => "Test", "nom_usuario" => "intruso_" . time(),
@@ -41,7 +31,6 @@ if (isset($respuesta['exito']) && $respuesta['exito'] === false) {
     echo "   Respuesta: " . json_encode($respuesta) . "\n";
 }
 
-// --- Control: un rol permitido (Ciudadano, Id_Rol 1) sí debe funcionar ---
 $emailOk = "ciudadano_ok_" . time() . "@eco.com";
 $respuestaOk = post_form("$API_USUARIOS/registro.php", [
     "pri_nom" => "Vecino", "pri_ape" => "Test", "nom_usuario" => "vecino_" . time(),
@@ -53,4 +42,31 @@ if (isset($respuestaOk['exito']) && $respuestaOk['exito'] === true) {
 } else {
     echo "❌ El registro con un rol válido debería funcionar.\n";
     echo "   Respuesta: " . json_encode($respuestaOk) . "\n";
+}
+
+function post_json($url, $data) {
+    $options = ["http" => ["header" => "Content-type: application/json\r\n", "method" => "POST", "content" => json_encode($data), "ignore_errors" => true]];
+    return json_decode(@file_get_contents($url, false, stream_context_create($options)), true);
+}
+
+$r = post_json("$API_USUARIOS/login.php", ["email" => $emailOk, "password" => "1234"]);
+if (isset($r['exito']) && $r['exito'] === false && stripos($r['mensaje'], 'aprobada') !== false) {
+    echo "✅ Un usuario con registro pendiente NO puede iniciar sesión - correcto\n";
+} else {
+    echo "❌ Un usuario pendiente pudo iniciar sesión (o el mensaje es otro): " . json_encode($r) . "\n";
+}
+
+$admin = post_json("$API_USUARIOS/login.php", ["email" => "admin@eco.com", "password" => "1234"]);
+$lista = json_decode(@file_get_contents("$API_USUARIOS/usuarioapi.php?accion=listar&token=" . urlencode($admin['token'] ?? '')), true);
+$idNuevo = null;
+foreach (($lista['data'] ?? []) as $u) { if ($u['Email'] === $emailOk) { $idNuevo = $u['Id_Usuario']; } }
+
+if ($idNuevo) {
+    post_form("$API_USUARIOS/usuarioapi.php", ["accion" => "aprobar", "id" => $idNuevo, "token" => $admin['token']]);
+    $r = post_json("$API_USUARIOS/login.php", ["email" => $emailOk, "password" => "1234"]);
+    echo !empty($r['token'])
+        ? "✅ Tras la aprobación del Administrador, el usuario ya puede iniciar sesión - correcto\n"
+        : "❌ Aprobado, pero el login sigue fallando: " . json_encode($r) . "\n";
+} else {
+    echo "❌ No se encontró al usuario recién registrado en el listado.\n";
 }

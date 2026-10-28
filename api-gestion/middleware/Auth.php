@@ -1,15 +1,6 @@
 <?php
 require_once __DIR__ . '/../config/conexion.php';
 
-/**
- * Middleware de autorización para api-gestion.
- *
- * api-gestion es un microservicio independiente de api-usuarios (cada
- * uno en su propio contenedor Docker), pero ambos comparten la misma
- * base de datos MySQL. Por eso, para validar un token no necesitamos
- * llamar a la otra API por red: alcanza con consultar la tabla Sesion
- * directamente, igual que hace api-usuarios.
- */
 class Auth {
 
     private static function buscarUsuarioPorToken($token) {
@@ -22,7 +13,7 @@ class Auth {
                 FROM Sesion s
                 INNER JOIN Usuario u ON s.Id_Usuario = u.Id_Usuario
                 INNER JOIN Rol r ON u.Id_Rol = r.Id_Rol
-                WHERE s.Token = :token
+                WHERE s.Token = :token AND u.Estado = 'Activo'
                 LIMIT 1";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([':token' => $token]);
@@ -53,7 +44,6 @@ class Auth {
         return $usuario;
     }
 
-    /** Exige token válido Y rol distinto de Ciudadano (regla de negocio del proyecto). */
     public static function requireGestion($token) {
         $usuario = self::requireLogin($token);
 

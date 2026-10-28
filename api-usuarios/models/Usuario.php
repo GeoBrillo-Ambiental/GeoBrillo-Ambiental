@@ -9,9 +9,9 @@ class Usuario {
         $this->db = conectar();
     }
 
-    public function insertar($priNom, $priApe, $nomUsuario, $passwordPlano, $email, $idRol, $idCuadrilla) {
-        $sql = "INSERT INTO Usuario (Pri_Nom, Pri_Ape, Nom_Usuario, Password, Email, Id_Rol, Id_Cuadrilla)
-                VALUES (:priNom, :priApe, :nomUsuario, :password, :email, :idRol, :idCuadrilla)";
+    public function insertar($priNom, $priApe, $nomUsuario, $passwordPlano, $email, $idRol, $idCuadrilla, $estado = 'Activo') {
+        $sql = "INSERT INTO Usuario (Pri_Nom, Pri_Ape, Nom_Usuario, Password, Email, Id_Rol, Id_Cuadrilla, Estado)
+                VALUES (:priNom, :priApe, :nomUsuario, :password, :email, :idRol, :idCuadrilla, :estado)";
 
         $stmt = $this->db->prepare($sql);
 
@@ -23,12 +23,13 @@ class Usuario {
             ':email'       => $email,
             ':idRol'       => $idRol,
             ':idCuadrilla' => ($idCuadrilla === '' || $idCuadrilla === null) ? null : $idCuadrilla,
+            ':estado'      => $estado,
         ]);
     }
 
     public function listar() {
         $sql = "SELECT u.Id_Usuario, u.Pri_Nom, u.Pri_Ape, u.Nom_Usuario, u.Email,
-                       u.Id_Rol, r.Nombre_Rol, u.Id_Cuadrilla
+                       u.Id_Rol, r.Nombre_Rol, u.Id_Cuadrilla, u.Estado
                 FROM Usuario u
                 LEFT JOIN Rol r ON u.Id_Rol = r.Id_Rol
                 ORDER BY u.Id_Usuario DESC";
@@ -39,7 +40,7 @@ class Usuario {
     public function buscarPorId($id) {
         $stmt = $this->db->prepare(
             "SELECT u.Id_Usuario, u.Pri_Nom, u.Pri_Ape, u.Nom_Usuario, u.Email,
-                    u.Id_Rol, r.Nombre_Rol, u.Id_Cuadrilla
+                    u.Id_Rol, r.Nombre_Rol, u.Id_Cuadrilla, u.Estado
              FROM Usuario u LEFT JOIN Rol r ON u.Id_Rol = r.Id_Rol
              WHERE u.Id_Usuario = :id LIMIT 1"
         );
@@ -67,6 +68,11 @@ class Usuario {
     public function eliminar($id) {
         $stmt = $this->db->prepare("DELETE FROM Usuario WHERE Id_Usuario = :id");
         return $stmt->execute([':id' => $id]);
+    }
+
+    public function cambiarEstado($id, $estado) {
+        $stmt = $this->db->prepare("UPDATE Usuario SET Estado = :estado WHERE Id_Usuario = :id");
+        return $stmt->execute([':estado' => $estado, ':id' => $id]);
     }
 
     public function buscarPorEmail($email) {

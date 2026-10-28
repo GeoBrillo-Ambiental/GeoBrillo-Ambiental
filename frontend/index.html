@@ -9,11 +9,11 @@
     <link href="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/flowbite@3.1.2/dist/flowbite.min.js"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col justify-between">
 
-    <!-- Botón para abrir el menú -->
     <button data-drawer-target="sidebar-menu"
             data-drawer-show="sidebar-menu"
             aria-controls="sidebar-menu"
@@ -24,7 +24,6 @@
         </svg>
     </button>
 
-    <!-- Menú lateral -->
     <div id="sidebar-menu"
          class="fixed top-0 left-0 z-40 w-72 h-screen p-6 overflow-y-auto transition-transform -translate-x-full bg-green-900">
 
@@ -58,14 +57,12 @@
                 </a>
             </li>
 
-            <!-- Visible para CUALQUIER usuario logueado (incluido Ciudadano) -->
             <li class="nav-con-sesion hidden border-t border-green-700 pt-4">
                 <a href="listarincidencias.html" class="text-white hover:text-green-300">
                     ⚠️ Incidencias
                 </a>
             </li>
 
-            <!-- Solo visible para usuarios logueados con rol distinto de Ciudadano -->
             <li class="nav-solo-gestion hidden border-t border-green-700 pt-4">
                 <span class="text-green-300 text-sm uppercase tracking-wide">Gestión</span>
             </li>
@@ -89,10 +86,34 @@
                     🏭 Centros y Maquinaria
                 </a>
             </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="logistica.html" class="text-white hover:text-green-300">
+                    🚛 Logística
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="panel.html" class="text-white hover:text-green-300">
+                    📊 Panel de control
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="informes.html" class="text-white hover:text-green-300">
+                    📄 Informes
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="mensajes.html" class="text-white hover:text-green-300">
+                    ✉️ Mensajes de contacto
+                </a>
+            </li>
+            <li class="nav-solo-gestion hidden">
+                <a href="notificaciones.html" class="text-white hover:text-green-300">
+                    🔔 Alertas
+                </a>
+            </li>
         </ul>
     </div>
 
-    <!-- Barra de navegación (Navbar) -->
     <nav class="bg-white border-b border-gray-200">
         <div class="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4 pl-14 sm:pl-4">
             <a href="index.html" class="flex items-center space-x-3 rtl:space-x-reverse">
@@ -101,7 +122,7 @@
             </a>
 
             <div class="flex md:order-2 items-center space-x-2 sm:space-x-3 rtl:space-x-reverse">
-                <!-- Botones para visitantes / ciudadanos -->
+
                 <button type="button"
                         class="nav-invitado text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 text-center"
                         onclick="window.location.href='login.html'">
@@ -113,7 +134,6 @@
                     Registro
                 </button>
 
-                <!-- Botón para usuarios logueados -->
                 <button id="btnLogout" type="button"
                         class="nav-con-sesion hidden text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-xs sm:text-sm px-3 sm:px-4 py-2 text-center">
                     Cerrar sesión
@@ -148,7 +168,6 @@
         </div>
     </nav>
 
-    <!-- Sección Portada / Hero -->
     <section class="relative min-h-[50vh] sm:min-h-[60vh] bg-cover bg-center flex items-center justify-center p-6"
              style="background-image: url('image/geo.png');">
         <div class="absolute inset-0 bg-black/40"></div>
@@ -159,7 +178,6 @@
         </div>
     </section>
 
-    <!-- Misión -->
     <section id="mision" class="bg-amber-50 py-8 px-4">
         <div class="py-8 px-4 mx-auto max-w-screen-xl text-center">
             <p class="text-base sm:text-lg md:text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed font-medium">
@@ -168,7 +186,6 @@
         </div>
     </section>
 
-    <!-- Quiénes somos / Software -->
     <section id="empresa" class="bg-white py-10 px-4 sm:px-6">
         <div class="max-w-4xl mx-auto space-y-4">
             <h2 class="text-3xl font-bold text-center mb-4 text-amber-900">¿Quiénes somos?</h2>
@@ -188,13 +205,12 @@
         </div>
     </section>
 
-    <!-- Opciones / Servicios -->
     <section id="opciones" class="bg-gray-50 min-h-screen py-10 px-4 sm:px-6">
         <h2 class="text-3xl font-bold text-center mb-8 text-amber-900">Opciones:</h2>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <a href="listacontenedores.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
-                <img src="image/contenedor con esclavo.jpeg" alt="Contenedores"
+                <img src="image/contenedores.svg" alt="Contenedores"
                      class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
                 <h3 class="text-xl font-semibold">Contenedores</h3>
                 <p class="text-gray-600">Nuestra selección de contenedores.</p>
@@ -202,7 +218,7 @@
             </a>
 
             <a href="listarcamiones.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
-                <img src="image/camion.jpeg" alt="Camiones"
+                <img src="image/camiones.svg" alt="Camiones"
                      class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
                 <h3 class="text-xl font-semibold">Camiones</h3>
                 <p class="text-gray-600">Nuestra selección de camiones.</p>
@@ -210,7 +226,7 @@
             </a>
 
             <a href="listarcentros.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
-                <img src="image/centros.jpg" alt="Centros de Acopio y Maquinaria"
+                <img src="image/centros.svg" alt="Centros de Acopio y Maquinaria"
                      class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
                 <h3 class="text-xl font-semibold">Centros y Maquinaria</h3>
                 <p class="text-gray-600">Centros de acopio y maquinaria básica.</p>
@@ -218,7 +234,7 @@
             </a>
 
             <a href="mapa.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
-                <img src="image/mapa residuos.jpeg" alt="Mapa"
+                <img src="image/mapa.svg" alt="Mapa"
                      class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
                 <h3 class="text-xl font-semibold">Mapa</h3>
                 <p class="text-gray-600">Consultá el mapa de contenedores y rutas.</p>
@@ -226,17 +242,36 @@
             </a>
 
             <a href="listarincidencias.html" class="bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition block">
-                <div class="rounded-xl w-full h-40 sm:h-48 mb-3 bg-amber-100 flex items-center justify-center text-6xl">
-                    ⚠️
-                </div>
+                <img src="image/incidencias.svg" alt="Incidencias"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
                 <h3 class="text-xl font-semibold">Incidencias</h3>
                 <p class="text-gray-600">Reportá y seguí el estado de incidencias.</p>
                 <p class="text-amber-800 font-bold mt-2 text-2xl">📋</p>
             </a>
+
+            <a href="panel.html" class="nav-solo-gestion hidden bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/panel.svg" alt="Panel de control"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Panel de control</h3>
+                <p class="text-gray-600">Estadísticas, informes y alertas.</p>
+            </a>
+
+            <a href="listarusuarios.html" class="nav-solo-gestion hidden bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/usuarios.svg" alt="Usuarios"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Usuarios</h3>
+                <p class="text-gray-600">Cuentas, roles y solicitudes de registro.</p>
+            </a>
+
+            <a href="logistica.html" class="nav-solo-gestion hidden bg-white shadow-lg rounded-2xl p-4 text-center hover:scale-105 transition">
+                <img src="image/logistica.svg" alt="Logística"
+                     class="rounded-xl w-full h-40 sm:h-48 object-cover mb-3">
+                <h3 class="text-xl font-semibold">Logística</h3>
+                <p class="text-gray-600">Cuadrillas, rutas y recolecciones.</p>
+            </a>
         </div>
     </section>
 
-    <!-- Formulario de Contacto -->
     <section id="contacto" class="py-12 px-4 max-w-3xl mx-auto w-full">
         <div class="bg-white shadow-xl rounded-2xl p-6 sm:p-8 border border-gray-100">
             <h2 class="text-3xl sm:text-4xl font-extrabold text-center mb-8 text-amber-900">
@@ -260,7 +295,7 @@
                 </div>
                 <div>
                     <label for="message" class="block mb-1 text-sm font-medium text-gray-700">Mensaje:</label>
-                    <textarea id="message" name="message" rows="4" placeholder="Escribe tu mensaje…" required
+                    <textarea id="message" name="message" rows="4" maxlength="500" placeholder="Escribe tu mensaje…" required
                               class="w-full p-3 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-green-500 focus:border-green-500"></textarea>
                 </div>
                 <button type="submit"
@@ -277,10 +312,30 @@
 
         document.getElementById('contact-form').addEventListener('submit', function (e) {
             e.preventDefault();
-            alert('¡Gracias por tu mensaje! Te contactaremos a la brevedad.');
-            this.reset();
+            const form = this;
+            const boton = form.querySelector('button[type="submit"]');
+            boton.disabled = true;
+
+            fetch(`${API_GESTION}/contactoapi.php`, {
+                method: 'POST',
+                body: new URLSearchParams({
+                    accion: 'enviar',
+                    name: form.name.value,
+                    email: form.email.value,
+                    phone: form.phone.value,
+                    message: form.message.value
+                })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) form.reset();
+                })
+                .catch(() => alert('No se pudo enviar el mensaje. Intentá de nuevo más tarde.'))
+                .finally(() => { boton.disabled = false; });
         });
     </script>
 
 </body>
 </html>
+

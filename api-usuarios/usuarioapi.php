@@ -20,27 +20,48 @@ try {
     switch ($accion) {
 
         case 'listar':
-            // Listar también requiere estar logueado y no ser Ciudadano:
-            // esta es la protección real (a nivel de API) que exige la
-            // consigna, más allá de que el frontend oculte el menú.
+
             Auth::requireGestion($token);
             echo json_encode($controlador->obtenerUsuarios());
             break;
 
         case 'insertar':
-            Auth::requireGestion($token);
-            echo json_encode($controlador->agregarUsuario($_POST));
+            $actor = Auth::requireGestion($token);
+            $permitidos = ($actor['Nombre_Rol'] === 'Administrador') ? null : [1, 2, 3, 4];
+            echo json_encode($controlador->agregarUsuario($_POST, $permitidos));
             break;
 
         case 'actualizar':
-            Auth::requireGestion($token);
+            $actor = Auth::requireGestion($token);
             $id = $_POST['id'] ?? '';
-            echo json_encode($controlador->actualizarUsuario($id, $_POST));
+            $esAdmin = ($actor['Nombre_Rol'] === 'Administrador');
+            if (!$esAdmin && $controlador->esAdministrador($id)) {
+                http_response_code(403);
+                echo json_encode(["exito" => false, "mensaje" => "Solo un Administrador puede modificar a otro Administrador."]);
+                break;
+            }
+            echo json_encode($controlador->actualizarUsuario($id, $_POST, $esAdmin ? null : [1, 2, 3, 4]));
+            break;
+
+        case 'aprobar':
+        case 'rechazar':
+            $actor = Auth::requireGestion($token);
+            if ($actor['Nombre_Rol'] !== 'Administrador') {
+                http_response_code(403);
+                echo json_encode(["exito" => false, "mensaje" => "Solo un Administrador puede resolver solicitudes de registro."]);
+                break;
+            }
+            echo json_encode($controlador->resolverSolicitud($_POST['id'] ?? '', $accion === 'aprobar' ? 'Activo' : 'Rechazado'));
             break;
 
         case 'eliminar':
-            Auth::requireGestion($token);
+            $actor = Auth::requireGestion($token);
             $id = $_POST['id'] ?? $_GET['id'] ?? '';
+            if ($actor['Nombre_Rol'] !== 'Administrador' && $controlador->esAdministrador($id)) {
+                http_response_code(403);
+                echo json_encode(["exito" => false, "mensaje" => "Solo un Administrador puede eliminar a otro Administrador."]);
+                break;
+            }
             echo json_encode($controlador->borrarUsuario($id));
             break;
 

@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 require_once __DIR__ . '/controllers/AuthControlador.php';
 
-// Soporta tanto JSON (fetch con application/json) como formularios clásicos
 $json = json_decode(file_get_contents('php://input'), true);
 $data = $json ?: $_POST;
 

@@ -6,17 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Centros de Acopio y Maquinaria</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8">
 
     <div class="max-w-3xl mx-auto space-y-6">
 
-        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            <!-- ============== CENTRO DE ACOPIO / VERTEDERO ============== -->
             <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
                 <h2 class="text-xl font-bold text-center text-green-700">
                     Registro de Centro 🏭
@@ -51,13 +52,26 @@
                         <label class="block mb-1 text-sm font-medium text-gray-700">Capacidad Actual</label>
                         <input type="number" name="cap_actual" required class="w-full border border-gray-300 rounded-lg p-3" placeholder="Ej: 6500">
                     </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Latitud (opcional)</label>
+                        <input type="number" step="any" name="latitud"  class="w-full border border-gray-300 rounded-lg p-3" placeholder="-34.9011">
+                    </div>
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Longitud (opcional)</label>
+                        <input type="number" step="any" name="longitud"  class="w-full border border-gray-300 rounded-lg p-3" placeholder="-56.1645">
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">📍 O hacé clic en el mapa para elegir la ubicación:</p>
+                    <div id="selectorMapa" class="w-full rounded-lg border border-gray-300" style="height: 260px;"></div>
+                </div>
                     <button type="submit" class="w-full bg-green-700 hover:bg-green-800 text-white font-medium rounded-lg py-3 transition">
                         Guardar Centro
                     </button>
                 </form>
             </div>
 
-            <!-- ============== MAQUINARIA BÁSICA ============== -->
             <div class="bg-white rounded-2xl shadow-xl p-6 space-y-4">
                 <h2 class="text-xl font-bold text-center text-green-700">
                     Registro de Maquinaria 🛠️
@@ -103,7 +117,10 @@
     </div>
 
     <script src="js/auth.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="js/selector-mapa.js"></script>
     <script>
+        const selectorMapa = montarSelectorMapa('selectorMapa', document.querySelector('[name="latitud"]'), document.querySelector('[name="longitud"]'));
         document.addEventListener('DOMContentLoaded', protegerVistaDeGestion);
 
         document.getElementById("formCentro").addEventListener("submit", function (e) {
@@ -167,3 +184,4 @@
 
 </body>
 </html>
+

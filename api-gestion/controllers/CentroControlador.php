@@ -9,6 +9,17 @@ class CentroControlador {
         $this->modelo = $modelo ?? new Centro();
     }
 
+    private function leerCoordenadas($datos) {
+        $lat = trim((string)($datos['latitud'] ?? ''));
+        $lng = trim((string)($datos['longitud'] ?? ''));
+        if ($lat !== '' || $lng !== '') {
+            if (!is_numeric($lat) || !is_numeric($lng) || abs($lat) > 90 || abs($lng) > 180) {
+                return null;
+            }
+        }
+        return [$lat === '' ? null : (float)$lat, $lng === '' ? null : (float)$lng];
+    }
+
     public function agregarCentro($datos) {
         $nombre    = trim($datos['nombre'] ?? '');
         $direccion = trim($datos['direccion'] ?? '');
@@ -20,7 +31,12 @@ class CentroControlador {
             return ["exito" => false, "mensaje" => "Todos los campos son obligatorios."];
         }
 
-        $resultado = $this->modelo->insertar($nombre, $direccion, $tipo, (int)$capTotal, (int)$capActual);
+        $coord = $this->leerCoordenadas($datos);
+        if ($coord === null) {
+            return ["exito" => false, "mensaje" => "Latitud/longitud inválidas."];
+        }
+
+        $resultado = $this->modelo->insertar($nombre, $direccion, $tipo, (int)$capTotal, (int)$capActual, $coord[0], $coord[1]);
 
         return $resultado
             ? ["exito" => true, "mensaje" => "Centro guardado con éxito."]
@@ -45,7 +61,12 @@ class CentroControlador {
             return ["exito" => false, "mensaje" => "Todos los campos son obligatorios."];
         }
 
-        $resultado = $this->modelo->actualizar($id, $nombre, $direccion, $tipo, (int)$capTotal, (int)$capActual);
+        $coord = $this->leerCoordenadas($datos);
+        if ($coord === null) {
+            return ["exito" => false, "mensaje" => "Latitud/longitud inválidas."];
+        }
+
+        $resultado = $this->modelo->actualizar($id, $nombre, $direccion, $tipo, (int)$capTotal, (int)$capActual, $coord[0], $coord[1]);
 
         return $resultado
             ? ["exito" => true, "mensaje" => "Centro actualizado correctamente."]

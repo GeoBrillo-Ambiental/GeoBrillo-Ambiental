@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - GeoBrillo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="h-full bg-white">
@@ -68,8 +69,14 @@
     const params = new URLSearchParams(window.location.search);
     const cartel = document.getElementById("mensajeInfo");
 
+    if (params.get("registrado") === "2") {
+        cartel.textContent = "¡Cuenta creada! Ya podés iniciar sesión.";
+        cartel.className = "mb-4 rounded-lg px-4 py-3 text-center text-sm font-medium bg-green-100 border border-green-400 text-green-700";
+        cartel.classList.remove("hidden");
+    }
+
     if (params.get("registrado") === "1") {
-        cartel.textContent = "¡Cuenta creada con éxito! Ya puedes iniciar sesión.";
+        cartel.textContent = "¡Solicitud enviada! Un administrador debe aprobar tu cuenta antes de que puedas iniciar sesión.";
         cartel.className = "mb-4 rounded-lg px-4 py-3 text-center text-sm font-medium bg-green-100 border border-green-400 text-green-700";
         cartel.classList.remove("hidden");
     }
@@ -91,8 +98,7 @@
         .then(resultado => {
             if (resultado.exito) {
                 setToken(resultado.token);
-                // Siempre volvemos al home: ahí el menú se arma solo
-                // según el rol (ver renderizarNavSegunSesion en auth.js).
+
                 window.location.href = "index.html";
             } else {
                 cartel.textContent = resultado.mensaje;
@@ -111,3 +117,4 @@
 
 </body>
 </html>
+

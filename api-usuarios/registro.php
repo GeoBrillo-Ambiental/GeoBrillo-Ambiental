@@ -18,16 +18,12 @@ try {
         exit();
     }
 
-    // Roles habilitados para el AUTOregistro público (Ciudadano, Chofer,
-    // Operador, Cuadrilla — los mismos 4 que ofrece registro.html).
-    // Id_Rol 5 (Administrador) queda deliberadamente afuera: ese rol solo
-    // se puede asignar desde la gestión de usuarios ya autenticada
-    // (usuarioapi.php, protegido por Auth::requireGestion) o desde
-    // database/crear_admin.php.
     $rolesAutoregistro = [1, 2, 3, 4];
 
     $controlador = new UsuarioControlador();
-    $resultado = $controlador->agregarUsuario($_POST, $rolesAutoregistro);
+    $estado = ((int)($_POST['id_rol'] ?? 0) === 1) ? 'Activo' : 'Pendiente';
+    $resultado = $controlador->agregarUsuario($_POST, $rolesAutoregistro, $estado);
+    $resultado['pendiente'] = ($estado === 'Pendiente');
 
     if (!$resultado['exito']) {
         http_response_code(400);

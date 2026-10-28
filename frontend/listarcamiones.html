@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lista de Camiones</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="marca.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen p-4 sm:p-8">
 
     <div class="max-w-4xl mx-auto space-y-6">
 
-        <a href="index.html" class="text-sm text-green-700 hover:underline">← Volver al inicio</a>
+        <a href="index.html" class="js-volver text-sm text-green-700 hover:underline">← Volver</a>
 
         <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
@@ -44,7 +45,6 @@
 
     </div>
 
-    <!-- Modal de edición -->
     <div id="modalEditar" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-md space-y-4">
             <h3 class="text-xl font-bold text-green-700">Editar Camión</h3>
@@ -96,7 +96,7 @@
         });
 
         function listar() {
-            fetch(`${API_GESTION}/camionapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
+            fetch(`${API_RECOLECCION}/camionapi.php?accion=listar&token=${encodeURIComponent(getToken())}`)
                 .then(res => res.json())
                 .then(data => {
                     const tabla = document.getElementById("tablaCamiones");
@@ -112,7 +112,7 @@
                     camiones.forEach(camion => {
                         const accionesHtml = esGestion ? `
                                 <td class="border px-4 py-3 space-x-1">
-                                    <button onclick='abrirModal(${JSON.stringify(camion)})' class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
+                                    <button onclick="abrirModal(${attr(camion)})" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1 rounded transition">
                                         Editar
                                     </button>
                                     <button onclick="eliminar(${camion.Id_Camion})" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded transition">
@@ -121,10 +121,10 @@
                                 </td>` : '';
                         tabla.innerHTML += `
                             <tr class="hover:bg-green-50">
-                                <td class="border px-4 py-3">${camion.Id_Camion ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.EstadoCam ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.Modelo ?? '-'}</td>
-                                <td class="border px-4 py-3">${camion.C_Carga ?? '-'}</td>
+                                <td class="border px-4 py-3">${esc(camion.Id_Camion, '-')}</td>
+                                <td class="border px-4 py-3">${esc(camion.EstadoCam, '-')}</td>
+                                <td class="border px-4 py-3">${esc(camion.Modelo, '-')}</td>
+                                <td class="border px-4 py-3">${esc(camion.C_Carga, '-')}</td>
                                 ${accionesHtml}
                             </tr>`;
                     });
@@ -153,7 +153,7 @@
             datos.append("accion", "actualizar");
             datos.append("token", getToken());
 
-            fetch(`${API_GESTION}/camionapi.php`, { method: "POST", body: datos })
+            fetch(`${API_RECOLECCION}/camionapi.php`, { method: "POST", body: datos })
                 .then(res => res.json())
                 .then(data => {
                     alert(data.mensaje);
@@ -173,7 +173,7 @@
             datos.append("id", id);
             datos.append("token", getToken());
 
-            fetch(`${API_GESTION}/camionapi.php`, { method: "POST", body: datos })
+            fetch(`${API_RECOLECCION}/camionapi.php`, { method: "POST", body: datos })
                 .then(res => res.json())
                 .then(data => { alert(data.mensaje); listar(); })
                 .catch(err => alert("Error al eliminar: " + err.message));
@@ -182,3 +182,4 @@
 
 </body>
 </html>
+
