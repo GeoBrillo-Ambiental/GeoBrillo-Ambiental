@@ -54,28 +54,58 @@ async function cerrarSesion() {
         console.error('Error cerrando sesión:', err);
     } finally {
         clearToken();
-        window.location.href = 'index.html';
+        window.location.replace('index.html');
     }
 }
 
 async function protegerVistaConSesion() {
     const usuario = await obtenerSesionActual();
     if (!usuario) {
-        window.location.href = 'login.html';
+        irALogin();
         return null;
     }
+    revelarVista();
     return usuario;
 }
 
 async function protegerVistaDeGestion() {
     const usuario = await obtenerSesionActual();
-    if (!puedeGestionar(usuario)) {
-        alert('No tenés permiso para acceder a esta sección.');
-        window.location.href = 'index.html';
+    if (!usuario) {
+        irALogin();
         return null;
     }
+    if (!puedeGestionar(usuario)) {
+        alert('No tenés permiso para acceder a esta sección.');
+        window.location.replace('index.html');
+        return null;
+    }
+    revelarVista();
     return usuario;
 }
+
+function irALogin() {
+    window.location.replace('login.html');
+}
+
+function revelarVista() {
+    document.documentElement.style.visibility = '';
+}
+
+window.addEventListener('pageshow', async function (e) {
+    const guardia = document.documentElement.dataset.guardia;
+    if (!guardia || !e.persisted) return;
+    document.documentElement.style.visibility = 'hidden';
+    const usuario = await obtenerSesionActual();
+    if (!usuario) {
+        irALogin();
+        return;
+    }
+    if (guardia === 'gestion' && !puedeGestionar(usuario)) {
+        window.location.replace('index.html');
+        return;
+    }
+    revelarVista();
+});
 
 async function renderizarNavSegunSesion() {
     const usuario = await obtenerSesionActual();
